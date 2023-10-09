@@ -133,6 +133,7 @@ def confidence_score_info(newWindow):
     percent.place(x=270,y=250)
     percent.insert(END,"95%")
 
+# Define layers
 def layer_segmentation(master):
 
     Layer1 = Text(master, height = 1, width = 20, font = "Karla 10", relief="flat", fg="red")
@@ -147,6 +148,7 @@ def layer_segmentation(master):
     Layer3.place(x=1310,y=620)
     Layer3.insert(END,"Retinal Pigment Epithelium")
 
+# default file name if no file is chossen
 def file_name(master,name):
     if name is "":
         name = "No File Chosen"
@@ -156,12 +158,14 @@ def file_name(master,name):
     file_n.insert(END,name)
 
     return file_n
-
+ 
+# display file button
 def file_upload_btn(master):
     upload_file_btn = Button(master, text ="Choose File", command = browse,borderwidth=0, bg='gray',font="Karla 10", fg='black',border=1)
     upload_file_btn.place(x=283,y=165)
 
 
+# function to open file explorer to browse files
 def browse():
    f_path = askopenfilename(initialdir="/",title="Select File", filetypes=(("PNG files","*.png*"),("All Files","*.*")))
    name_borwser = os.path.split(f_path)[1]
