@@ -22,13 +22,16 @@ for directory_path in glob.glob(test_path):
 test_test = np.array(test_test)
 # test_test = test_test.reshape(-1, IMG_SIZE, IMG_SIZE)
 
+
+'''
+# Shows entire dataset file
 plt.figure(figsize=(40,100))
 for i in range(8):
     plt.subplot(14, 5, i+1)
     plt.imshow(test_test[i,:,:])
     plt.title("(Label: " + str(i) + ")")
 plt.show()
-
+'''
 
 test_test = np.expand_dims(test_test, axis=3)
 test_test = normalize(test_test, axis=1)
@@ -36,7 +39,7 @@ test_test = normalize(test_test, axis=1)
 model_location = '/Users/adams/Downloads/retina_segmentation_8_layer.hdf5'
 model = tf.keras.models.load_model(model_location)
 # model.summary()
-print(test_test.shape)
+# print(test_test.shape)
 
 test1 = test_test[7]
 test_img_norm = test1[:, :, 0][:, :, None]
