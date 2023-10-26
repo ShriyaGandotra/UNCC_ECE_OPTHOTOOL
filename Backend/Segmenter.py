@@ -15,6 +15,7 @@ for directory_path in glob.glob(test_path):
     for img_path in glob.glob(os.path.join(directory_path, "*.jpeg")):
         img = cv2.imread(img_path, 0)
         img = cv2.resize(img, (640, 640))
+        img = cv2.addWeighted(img, 1.0, img, 1.0, 1.0)
         test_test.append(img)
         print(img_path)
 
@@ -23,7 +24,7 @@ test_test = np.array(test_test)
 # test_test = test_test.reshape(-1, IMG_SIZE, IMG_SIZE)
 
 
-'''
+
 # Shows entire dataset file
 plt.figure(figsize=(40,100))
 for i in range(8):
@@ -31,7 +32,6 @@ for i in range(8):
     plt.imshow(test_test[i,:,:])
     plt.title("(Label: " + str(i) + ")")
 plt.show()
-'''
 
 test_test = np.expand_dims(test_test, axis=3)
 test_test = normalize(test_test, axis=1)
