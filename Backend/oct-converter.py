@@ -1,4 +1,6 @@
 import json
+import numpy as np
+from oct_converter.image_types import OCTVolumeWithMetaData
 
 filepath = ""
 
@@ -23,7 +25,6 @@ def oct_converter_e2e(filepath):
     oct_volumes = (file.read_oct_volume())
     
     for volume in oct_volumes:
-        oct_volumes.peek(show_contours=True)
         volume.save("image.png")
 
 #convert .img files to png
@@ -40,7 +41,6 @@ def oct_converter_boct(filepath):
     oct_volumes = file.read_oct_volume()
     
     for oct in oct_volumes:
-        oct_volumes.peek(show_contours=True)
         oct.save("image.png")
         
 #conversion of POCT(optovue) files into png images
@@ -50,7 +50,6 @@ def oct_converter_poct(filepath):
     oct_volumes = file.read_oct_volume()
     
     for volume in oct_volumes:
-        oct_volumes.peek(show_contours=True)
         volume.save("image.png")
 
 #convert .dcm files to png
