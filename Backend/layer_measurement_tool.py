@@ -79,12 +79,22 @@ def get_layer_data(image_in: Image):
 
 
 def rgb_to_hex(rgb):
-    # Convert RGB tuple to hexadecimal color code
+    """
+    Convert RGB tuple to hexadecimal color code
+    :param rgb (RGB) -> the rgb value to convert
+    :returns hex_color: str -> the RGB color represented in hexadecimal format
+    """
     hex_color = "#{:02x}{:02x}{:02x}".format(*rgb)
     return hex_color
 
 
 def calculate_hue(target, tints):
+    """
+    Finds the closest color in a list of provided hues
+    :param target: str -> the color value to match to the hues in hexadecimal format
+    :param tints: list(str) -> the list of hues in hexadecimal format
+    :returns closest[0]: str -> the color best matching the target represented in hexadecimal format
+    """
     target_hue = colorir.color_class.HexRGB(target).hsl()[0]
     closest = (None, 180)
     for tint in tints:
@@ -135,6 +145,11 @@ def calculate_thicknesses(layers_in: dict[pd.DataFrame], image_in: Image):
 
 
 def find_min_y_val(subset_in: pd.DataFrame):
+    """
+    Finds the minimum y value in the DataFrame, making sure that there's another pixel next to it so we're not choosing a random pixel
+    :param subset_in: pd.DataFrame -> the x column of values to find the minimum y value for 
+    :returns current_value -> the minimum y value
+    """
     # Sort values in the 'y' column from least to greatest
     subset_sorted = subset_in.sort_values(by='y')
 
@@ -151,6 +166,11 @@ def find_min_y_val(subset_in: pd.DataFrame):
 
 
 def find_max_y_val(subset_in: pd.DataFrame):
+    """
+    Finds the maximum y value in the DataFrame, making sure that there's another pixel next to it so we're not choosing a random pixel
+    :param subset_in: pd.DataFrame -> the x column of values to find the maximum y value for 
+    :returns current_value -> the maximum y value
+    """
     # Sort values in the 'y' column from greatest to least
     subset_sorted = subset_in.sort_values(by='y', ascending=False)
 
