@@ -34,7 +34,7 @@ inverted_ava = ImageOps.invert(pil_ava)
 red = Image.new('RGB', (320,320), 'red')
 blue = Image.new('RGB', (320,320), 'blue')
 
-#create AV map with color seperation
+#create A and V map without color
 a_map = ImageChops.multiply(pil_ava,pil_img)
 v_map = ImageChops.multiply(inverted_ava,pil_img)
 
@@ -42,22 +42,20 @@ v_map = ImageChops.multiply(inverted_ava,pil_img)
 red_a_map = ImageChops.multiply(a_map,red)
 blue_v_map = ImageChops.multiply(v_map,blue)
 
+#add together to create red and blue AV map
 av_map = ImageChops.add(red_a_map,blue_v_map)
-
 av_map.save('av_map.png')
 #a_map.save('a_map.png')
 #v_map.save('v_map.png')
 
 
 #count number of red and blue pixels
-red = (255,0,0)
 red_pixels, blue_pixels = 0
 
-image = Image.open(ava_map)
-for pixel in image.getdata():
-    if pixel is red:
+for pixel in a_map.getdata():
+    if pixel is (not 0):
         red_pixels += 1
-width, height = image.size
+width, height = a_map.size()
 total_area = width*height
 
 #red pixels is arteries, blue pixels is veins
