@@ -56,7 +56,7 @@ v_I = 0
 for pixel in a_map.getdata():
     if pixel != (0,0,0):
         a_pixels += 1
-        a_I += a_map.getdata()
+        a_I += a_map.getdata().sum()
 
 #A_PID calculation
 A_PID = 100/255 *(a_I/a_pixels)
@@ -65,7 +65,7 @@ A_PID = 100/255 *(a_I/a_pixels)
 for pixel in v_map.getdata():
     if pixel != (0,0,0):
         v_pixels += 1
-        v_I += a_map.getdata()
+        v_I += a_map.getdata().sum()
         
 #V_PID calculation
 V_PID = 100/255 *(v_I/v_pixels)
