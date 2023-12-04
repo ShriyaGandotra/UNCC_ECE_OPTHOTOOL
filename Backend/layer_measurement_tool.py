@@ -1,5 +1,5 @@
 # OCT Layer Measurement Tool
-# Authors: Lauren Bourque & Yousef Abualeinan
+# Authors: Lauren Bourque & Yousef Abuelanien
 
 # Libraries
 from PIL import Image
@@ -7,6 +7,8 @@ import os
 import pandas as pd
 import colorir.color_class
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import mstats
 
 
 def run_code():
@@ -17,8 +19,9 @@ def run_code():
     print(image)
     layer_data: dict[pd.DataFrame] = get_layer_data(image_in=image)
     all_layer_thicknesses: list[pd.Series] = calculate_thicknesses(layers_in=layer_data, image_in=image)
-    avg_thicknesses: list[int] = calculate_avg_thicknesses(layer_thicknesses_in=all_layer_thicknesses)
+    avg_thicknesses: list[int] = calculate_avg_thicknesses(image_in=image, layer_thicknesses_in=all_layer_thicknesses)
     print(avg_thicknesses)
+    create_plots(all_layer_thicknesses=all_layer_thicknesses, image_in=image)
 
 
 def get_image():
@@ -45,7 +48,7 @@ def get_layer_data(image_in: Image):
         '#e4ff12',  # Color 1 (Yellow)
         '#15ffe1',  # Color 2 (Teal)
         '#ff9400',  # Color 3 (Orange)
-        '#0028ff',  # Color 4 (Darker Blue)
+        '#0000ff',  # Color 4 (Darker Blue)
         '#ff1d00',  # Color 5 (Red)
         '#7cff79',  # Color 6 (Green)
         '#0080ff',  # Color 7 (Sky Blue)
@@ -99,7 +102,7 @@ def calculate_hue(target, tints):
     closest = (None, 180)
     for tint in tints:
         hue = colorir.color_class.HexRGB(tint).hsl()[0]
-        hue_dist = (min(target_hue, hue) - max(target_hue, hue)) % 360
+        hue_dist = min((hue - target_hue) % 360, (target_hue - hue) % 360)
         if hue_dist < closest[1]:
             closest = (tint, hue_dist)
     return closest[0]
@@ -119,24 +122,25 @@ def calculate_thicknesses(layers_in: dict[pd.DataFrame], image_in: Image):
 
     # Loop through the Dataframes
     for key, layer in layers_in.items():
-        # Create a Pandas Series called layer_thicknesses to store the thicknesses for one layer
-        layer_thicknesses = pd.Series(name='layer_thicknesses')
+        if not layer.empty:
+            # Create a Pandas Series called layer_thicknesses to store the thicknesses for one layer
+            layer_thicknesses = pd.Series(name='layer_thicknesses')
 
-        for x_val in range(width):
-            # Filter the DataFrame for the given x value
-            subset_layer = layer[layer['x'] == x_val]
+            for x_val in range(width):
+                # Filter the DataFrame for the given x value
+                subset_layer = layer[layer['x'] == x_val]
 
-            if not subset_layer.empty:
-                # Find the biggest and smallest y values
-                biggest_y = find_max_y_val(subset_in=subset_layer)
-                smallest_y = find_min_y_val(subset_in=subset_layer)
+                if not subset_layer.empty:
+                    # Find the biggest and smallest y values
+                    biggest_y = find_max_y_val(subset_in=subset_layer)
+                    smallest_y = find_min_y_val(subset_in=subset_layer)
 
-                if biggest_y is not None and smallest_y is not None:
-                    # Calculate the difference
-                    thickness = biggest_y - smallest_y + 1
+                    if biggest_y is not None and smallest_y is not None:
+                        # Calculate the difference
+                        thickness = biggest_y - smallest_y + 1
 
-                    # Append the value to the Series
-                    layer_thicknesses[x_val] = thickness
+                        # Append the value to the Series
+                        layer_thicknesses.loc[x_val] = thickness
 
         # Add the thickness values for the one layer to the list of layer thicknesses
         all_layer_thicknesses.append(layer_thicknesses)
@@ -147,7 +151,7 @@ def calculate_thicknesses(layers_in: dict[pd.DataFrame], image_in: Image):
 def find_min_y_val(subset_in: pd.DataFrame):
     """
     Finds the minimum y value in the DataFrame, making sure that there's another pixel next to it so we're not choosing a random pixel
-    :param subset_in: pd.DataFrame -> the x column of values to find the minimum y value for 
+    :param subset_in: pd.DataFrame -> the x column of values to find the minimum y value for
     :returns current_value -> the minimum y value
     """
     # Sort values in the 'y' column from least to greatest
@@ -168,7 +172,7 @@ def find_min_y_val(subset_in: pd.DataFrame):
 def find_max_y_val(subset_in: pd.DataFrame):
     """
     Finds the maximum y value in the DataFrame, making sure that there's another pixel next to it so we're not choosing a random pixel
-    :param subset_in: pd.DataFrame -> the x column of values to find the maximum y value for 
+    :param subset_in: pd.DataFrame -> the x column of values to find the maximum y value for
     :returns current_value -> the maximum y value
     """
     # Sort values in the 'y' column from greatest to least
@@ -186,20 +190,71 @@ def find_max_y_val(subset_in: pd.DataFrame):
             return current_value
 
 
-def calculate_avg_thicknesses(layer_thicknesses_in: list[pd.Series]):
+def calculate_avg_thicknesses(image_in: Image, layer_thicknesses_in: list[pd.Series]):
     """
     Calculates the average thicknesses for the provided thickness values
+    :param image_in Image -> image passed in
     :param layer_thicknesses_in (list[pd.Series]) -> list of 8 pandas Series objects containing the layer thicknesses for each pixel along the x axis for each layer
     :returns avg_thicknesses (list[int]) -> list of 8 average thickness values
     """
     avg_thicknesses = []
 
+    # Set the winsorizing limits, e.g., 1% and 99%
+    lower_limit = 0.01
+    upper_limit = 0.98
+
     # Calculates the mean value for each Pandas Series
     for layer in layer_thicknesses_in:
-        mean_value = layer.mean()
+        # Winsorize the data to exclude extreme values
+        winsorized_data = mstats.winsorize(layer, limits=(lower_limit, upper_limit))
+
+        mean_value = winsorized_data.mean()
+        width, height = image_in.size
+        mean_value = (mean_value/height) * 6 * 1000  # Value in micrometers
         avg_thicknesses.append(mean_value)
 
     return avg_thicknesses
+
+
+def create_plots(all_layer_thicknesses: list[pd.Series], image_in: Image):
+    # List of layer acronyms for graph labels
+    layer_acronyms = [
+        'Nerve Fiber Layer',
+        'GCL+IPL',
+        'Inner Nuclear Layer',
+        'Outer Plexiform Layer',
+        'Outer Nuclear Layer',
+        'Ellipsoid Zone',
+        'Retinal Pigment Epithelium',
+        'Choroid'
+    ]
+
+    width, height = image_in.size
+
+    # Create a single plot
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for index, layer in enumerate(all_layer_thicknesses):
+        # Scale the x and y values
+        modified_x_values = (layer.index / width) * 6  # Values are in millimeters
+        modified_y_values = (layer.values / height) * 6000  # Values are in micrometers
+
+        # Filter out y values greater than 1000
+        modified_y_values = [y if y <= 1000 else None for y in modified_y_values]
+
+        # Plot on the scatter plot
+        ax.plot(modified_x_values, modified_y_values, marker='o', markersize=4, linestyle='-', linewidth=1, label=layer_acronyms[index])
+
+    # Set labels and title
+    ax.set_xlabel('Vertical Distance (mm)')
+    ax.set_ylabel('Thickness (micrometers)')
+    ax.set_title('Plot of Layer Thicknesses')
+
+    # Add legend
+    ax.legend()
+
+    # Show the plot
+    plt.show()
 
 
 # Executes the code
