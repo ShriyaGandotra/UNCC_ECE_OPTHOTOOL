@@ -56,21 +56,24 @@ v_I = 0
 for pixel in a_map.getdata():
     if pixel != (0,0,0):
         a_pixels += 1
-        a_I += a_map.getdata().sum()
-
+a_I = sum(list(sum(list(a_map.getdata()),())))
 #A_PID calculation
 A_PID = 100/255 *(a_I/a_pixels)
 
+print('A_PID = ', A_PID)
 #count pixels and intensities for veins
 for pixel in v_map.getdata():
     if pixel != (0,0,0):
         v_pixels += 1
-        v_I += a_map.getdata().sum()
-        
+
+v_I = sum(list(sum(list(v_map.getdata()),())))
 #V_PID calculation
 V_PID = 100/255 *(v_I/v_pixels)
 
+print('V_PID = ', V_PID)
 #AV_PID ratio calculation
 AV_PIDR = A_PID/V_PID
+
+print('AV_PIDR = ', AV_PIDR)
 
 
