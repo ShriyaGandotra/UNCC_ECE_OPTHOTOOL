@@ -49,9 +49,12 @@ av_map = ImageChops.add(red_a_map,blue_v_map)
 #v_map.save('v_map.png')
 
 #count pixels and intensities for arteries
-a_pixels, v_pixels, a_I, v_I= 0
+a_pixels = 0
+v_pixels = 0
+a_I = 0
+v_I = 0
 for pixel in a_map.getdata():
-    if pixel is (not 0):
+    if pixel != (0,0,0):
         a_pixels += 1
         a_I += a_map.getdata()
 
@@ -60,7 +63,7 @@ A_PID = 100/255 *(a_I/a_pixels)
 
 #count pixels and intensities for veins
 for pixel in v_map.getdata():
-    if pixel is (not 0):
+    if pixel != (0,0,0):
         v_pixels += 1
         v_I += a_map.getdata()
         
