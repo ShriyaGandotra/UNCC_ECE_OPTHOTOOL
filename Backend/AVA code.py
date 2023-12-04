@@ -44,33 +44,30 @@ blue_v_map = ImageChops.multiply(v_map,blue)
 
 #add together to create red and blue AV map
 av_map = ImageChops.add(red_a_map,blue_v_map)
-av_map.save('av_map.png')
+#av_map.save('av_map.png')
 #a_map.save('a_map.png')
 #v_map.save('v_map.png')
 
-
-#count number of red and blue pixels
-red_pixels, blue_pixels = 0
-
+#count pixels and intensities for arteries
+a_pixels, v_pixels, a_I, v_I= 0
 for pixel in a_map.getdata():
     if pixel is (not 0):
-        red_pixels += 1
-width, height = a_map.size()
-total_area = width*height
+        a_pixels += 1
+        a_I += a_map.getdata()
 
-#red pixels is arteries, blue pixels is veins
-blue_pixels = total_area-red_pixels
+#A_PID calculation
+A_PID = 100/255 *(a_I/a_pixels)
 
-#percentage AA (red pixels/total pixels)*100
-aa_percent = (red_pixels/total_area)
+#count pixels and intensities for veins
+for pixel in v_map.getdata():
+    if pixel is (not 0):
+        v_pixels += 1
+        v_I += a_map.getdata()
+        
+#V_PID calculation
+V_PID = 100/255 *(v_I/v_pixels)
 
-# percentage VA (blue pixels/total pixels)*100
-va_percent = (blue_pixels/total_area)
-
-#A-PID
-I_sum = 0
-#for pixel in pil_amap.getdata():
-#    I_sum += pil_amap.getdata()
-#A_PID = 100/255*(1/red_pixels)*I_sum
+#AV_PID ratio calculation
+AV_PIDR = A_PID/V_PID
 
 
