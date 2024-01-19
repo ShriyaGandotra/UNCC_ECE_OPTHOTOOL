@@ -197,6 +197,27 @@ def file_name(master, table_select, name=""):
         #append('', 'end', values=(name, date_time, file_type))
 
     return file_name_display
+
+ #oct-converter
+def oct_conversion(name_browser):
+    file_type = os.path.splitext(name_browser)[1].upper().replace(".", "")
+    
+    if file_type == '.oct'
+        oct_converter_poct(name_browser)
+    if file_type == '.OCT'
+        oct_converter_boct(name_browser)
+    if file_type == '.fds'
+        oct_converter_fds(name_browser)
+    if file_type == '.fda'
+        oct_converter_fda(name_browser)
+    if file_type == '.img'
+        oct_converter_img(name_browser)
+    if file_type == '.dcm'
+        oct_converter_dcm(name_browser)
+    if file_type == '.e2e'
+        oct_converter_e2e(name_browser)
+ 
+    return
  
 # display file button
 def file_upload_btn(master, table_select):

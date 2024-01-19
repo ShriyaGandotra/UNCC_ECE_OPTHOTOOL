@@ -10,7 +10,7 @@ def oct_converter_fds(filepath):
     from oct_converter.readers import FDS
     file = FDS(filepath)
     oct_volumes = (file.read_oct_volume())
-    oct_volumes.save("image.png")
+    oct_volumes.save("fds.png")
 
 
 # convert .fda files to png
@@ -18,7 +18,7 @@ def oct_converter_fda(filepath):
     from oct_converter.readers import FDA
     file = FDA(filepath)
     oct_volumes = (file.read_oct_volume())
-    oct_volumes.save("image.png")
+    oct_volumes.save("fda.png")
 
 
 # conversion of e2e files into png images
@@ -28,7 +28,7 @@ def oct_converter_e2e(filepath):
     oct_volumes = (file.read_oct_volume())
 
     for volume in oct_volumes:
-        volume.save("image.png")
+        volume.save("e2e.png")
 
 
 # convert .img files to png
@@ -36,7 +36,7 @@ def oct_converter_img(filepath):
     from oct_converter.readers import IMG
     file = IMG(filepath)
     oct_volume = (file.read_oct_volume())
-    oct_volume.save("image.png")
+    oct_volume.save("img.png")
 
 
 # conversion of BOCT(bioptigen) files into png images
@@ -46,7 +46,7 @@ def oct_converter_boct(filepath):
     oct_volumes = file.read_oct_volume()
 
     for oct in oct_volumes:
-        oct.save("image.png")
+        oct.save("Boct.png")
 
 
 # conversion of POCT(optovue) files into png images
@@ -56,7 +56,7 @@ def oct_converter_poct(filepath):
     oct_volumes = file.read_oct_volume()
 
     for volume in oct_volumes:
-        volume.save("image.png")
+        volume.save("Poct.png")
 
 
 # convert .dcm files to png
@@ -64,4 +64,4 @@ def oct_converter_dcm(filepath):
     from oct_converter.readers import Dicom
     file = Dicom(filepath)
     oct_volumes = (file.read_oct_volume())
-    oct_volumes.save("image.png")
+    oct_volumes.save("dcm.png")
