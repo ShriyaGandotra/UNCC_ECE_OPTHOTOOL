@@ -3,10 +3,8 @@
 
 # Libraries
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
 import os
-from PIL import Image, ImageFilter
 
 
 def run_code():
