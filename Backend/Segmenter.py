@@ -1,56 +1,117 @@
 # Libraries
 import numpy as np
-import os, cv2, glob
+import os, cv2, glob, time, math
 from keras.utils import normalize
 from matplotlib import pyplot as plt
-import tensorflow as tf
+from keras.models import load_model
 
 IMG_SIZE = 640
 
 # Capture training image info as a list
-test_test = []
-test_path = '/Users/adams/Desktop/OCT-Segmenter/Test'
+input_image = []
+img_path = r'C:/Users/adams/Desktop/Adams_B_scan' #Replace with input path in final dev
+png_count = 0
 
-for directory_path in glob.glob(test_path):
-    for img_path in glob.glob(os.path.join(directory_path, "*.jpeg")):
-        img = cv2.imread(img_path, 0)
-        img = cv2.resize(img, (640, 640))
-        img = cv2.addWeighted(img, 1.0, img, 1.0, 1.0)
-        test_test.append(img)
-        print(img_path)
+png_files = glob.glob(os.path.join(img_path, "*.png"))
+png_count = len(png_files)
+
+'''
+denoised = []
+
+for image_path in png_files:
+    # Convert to grayscale if needed
+    gray = cv2.imread(image_path, 0)
+
+    # Apply median filter
+    median_filtered = cv2.medianBlur(gray, 1)
+
+    # Apply non-local means denoising
+    denoised1 = cv2.fastNlMeansDenoising(median_filtered, None, 30, 7, 21)
+    denoised.append(denoised1)
+    
+
+plt.figure(figsize=(40,80))
+for i in range(5): #t_img
+    plt.subplot(1, 5, i+1) #plt.subplot(rows_needed, img_per_row, i+1)
+    plt.imshow(denoised[i])
+    plt.axis('off')
+    
+plt.tight_layout()
+plt.show()
+'''
+
+
+for image_path in png_files:
+    img = cv2.imread(image_path, 0)
+    img = cv2.resize(img, (IMG_SIZE, IMG_SIZE)) # interpolation = cv2.INTER_NEAREST
+    #img = cv2.addWeighted(img, 1.0, img, 1.0, 1.0)
+    input_image.append(img)
+    print(image_path)
+
+print(png_count)
 
 # Convert list to array for machine learning processing
-test_test = np.array(test_test)
-# test_test = test_test.reshape(-1, IMG_SIZE, IMG_SIZE)
+input_image = np.array(input_image)
 
+# Plot Dims
+img_per_row = 20
+t_img = png_count
+rows_needed = math.ceil(t_img/img_per_row)
 
 
 # Shows entire dataset file
-plt.figure(figsize=(40,100))
-for i in range(8):
-    plt.subplot(14, 5, i+1)
-    plt.imshow(test_test[i,:,:])
-    plt.title("(Label: " + str(i) + ")")
+plt.figure(figsize=(40,80))
+for i in range(5): #t_img
+    plt.subplot(1, 5, i+1) #plt.subplot(rows_needed, img_per_row, i+1)
+    plt.imshow(input_image[i,:,:])
+    plt.axis('off')
+    
+plt.tight_layout()
 plt.show()
 
-test_test = np.expand_dims(test_test, axis=3)
-test_test = normalize(test_test, axis=1)
 
-model_location = '/Users/adams/Downloads/retina_segmentation_8_layer.hdf5'
-model = tf.keras.models.load_model(model_location)
-# model.summary()
-# print(test_test.shape)
+expand_img = np.expand_dims(input_image, axis=3)
+norm_image = normalize(expand_img, axis=1)
 
-test1 = test_test[7]
-test_img_norm = test1[:, :, 0][:, :, None]
-test = np.expand_dims(test_img_norm, 0)
+#Load Model
+model_location = 'Backend/Backend-Models/retina_segmentation_8_layer.hdf5'
+model = load_model(model_location)
 
-prediction = (model.predict(test))
-predicted_img = np.argmax(prediction, axis=3)[0, :, :]
-print(prediction.shape)
+# Printing the predicted images
+start = time.time()
+plt.figure(figsize=(10,40))
+
+for i in range(5):
+    img = norm_image[i]
+    img_norm = img[:, :, 0][:, :, None]
+    img = np.expand_dims(img_norm, 0)
+
+    prediction = (model.predict(img))
+    predicted_img = np.argmax(prediction, axis=3)[0, :, :]
+
+    plt.subplot(1, 5, i+1)
+    plt.imshow(predicted_img, cmap='jet')
+    plt.axis('off')
+
+end = time.time()
+plt.tight_layout() 
+plt.show()
+dur = end - start
+print(f"Duration: {dur} seconds")
+print(f"Prediction shape: {prediction.shape}")
 
 
-plt.figure(figsize=(40, 20))
-plt.title('Prediction<')
-plt.imshow(predicted_img, cmap='jet')
+
+# Indivdual Predicted layers for 1 scan
+for i in range(9):
+    img = norm_image[i]
+    img_norm = img[:, :, 0][:, :, None]
+    img = np.expand_dims(img_norm, 0)
+
+    prediction = (model.predict(img))
+    plt.subplot(2, 5, i+1)
+    plt.imshow(prediction[0, :, :, i])
+    plt.axis('off')
+
+plt.tight_layout() 
 plt.show()
