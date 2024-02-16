@@ -1,3 +1,5 @@
+# Author : Shriya Gandotra
+# Last Modified: 2/15/2024
 #------------------------------------------- LIBRARIES ---------------------------------------------------#
 import tkinter as tk
 from tkinter import ttk
@@ -11,6 +13,19 @@ import os
 from tkintertable import TableCanvas, TableModel
 import random
 from collections import OrderedDict
+import oct_Converter as OCT
+import math
+import cv2
+import matplotlib.pyplot as plt
+from tkinter import ttk
+from tkinter.messagebox import showinfo
+import threading
+import time
+from PIL import Image, ImageTk
+from tkinter import ttk, Button, Toplevel, Label
+from tkinter import ttk, filedialog
+from tkinter.ttk import Progressbar
+import threading
 #------------------------------------------- FIRST PAGE --------------------------------------------------#
 # creates a Tk() object
 master = Tk()
@@ -94,15 +109,79 @@ def upload(master):
 
 
 # Creating retinal scan label for 1st page
-def retina(master):
+def tools(master):
     # Create the main frame that will hold the retina details section
-    retina_frame = Frame(master, borderwidth=2, relief="groove", bg="white")
-    retina_frame.place(x=85, y=430, width=434, height=327)
+    tools_frame = Frame(master, borderwidth=2, relief="groove", bg="white")
+    tools_frame.place(x=85, y=640, width=434, height=107)
+
+    create_label_with_shadow(tools_frame, "  Tools", 0, 0, 53)
+   
+    ############# DISTANCE TOOL #########
+    # Function to calculate the distance
+    def calculate_distance():
+        global point1, point2
+        if point1 and point2:
+            distance = math.sqrt(((point2[0] - point1[0]) * width) ** 2 + ((point2[1] - point1[1]) * height) ** 2)
+            result_label.config(text=f"Distance: {distance:.2f} mm")
+
+    def set_point(event):
+        global point1, point2
+        if point1 is None:
+            point1 = (event.x, event.y)
+        elif point2 is None:
+            point2 = (event.x, event.y)
+            calculate_distance()
+            draw_line()
+
+    # Function to draw a line between the two points
+    def draw_line():
+        global point1, point2, line
+        if line:
+            line.destroy()
+        x1, y1 = point1
+        x2, y2 = point2
+        length = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        angle = math.degrees(math.atan2(y2 - y1, x2 - x1))
+        min_x = min(x1, x2)
+        min_y = min(y1, y2)
+        line = ttk.Label(master, width=int(length), background="red")
+        line.place(x=min_x, y=min_y)
+        line.config(height=2)
+
+    # Function to toggle measurement mode
+    def toggle_measure_mode():
+        global measure_mode, point1, point2, line
+        measure_mode = not measure_mode
+        if measure_mode:
+            measure_button.config(relief=tk.SUNKEN, borderwidth=3)
+            master.bind("<Button-1>", set_point)
+        else: 
+            measure_button.config(relief=tk.RAISED, borderwidth=0)
+            master.unbind("<Button-1>")
+            point1 = None
+            point2 = None
+            result_label.config(text="Distance: N/A")
+            if line:
+                line.destroy()
+
+    measure_button = Button(master, text = "Measure Tool", command = toggle_measure_mode)
+    measure_button.place(x=95, y=690)
+    #Show Distance
+    result_label = tk.Label(master, text="Distance: N/A")
+    result_label.place(x=95, y=720, width= 80, height= 20)
+
+    return tools_frame
+
+# Creating retinal scan label for 1st page
+def layer(master):
+    # Create the main frame that will hold the retina details section
+    layer_frame = Frame(master, borderwidth=2, relief="groove", bg="white")
+    layer_frame.place(x=85, y=435, width=434, height=175)
 
     # Place the "Retina Details" label with shadow in the retina frame
-    create_label_with_shadow(retina_frame, "  Retina Details", 0, 0, 53)
+    create_label_with_shadow(layer_frame, "  Layer Details", 0, 0, 53)
 
-    return retina_frame
+    return layer_frame
 
 # create a diagnose button that will open a new window on button click
 def diag_button(master):
@@ -198,43 +277,131 @@ def file_name(master, table_select, name=""):
 
     return file_name_display
 
- #oct-converter
-def oct_conversion(name_browser):
-    file_type = os.path.splitext(name_browser)[1].upper().replace(".", "")
-    
-    if file_type == '.oct'
-        oct_converter_poct(name_browser)
-    if file_type == '.OCT'
-        oct_converter_boct(name_browser)
-    if file_type == '.fds'
-        oct_converter_fds(name_browser)
-    if file_type == '.fda'
-        oct_converter_fda(name_browser)
-    if file_type == '.img'
-        oct_converter_img(name_browser)
-    if file_type == '.dcm'
-        oct_converter_dcm(name_browser)
-    if file_type == '.e2e'
-        oct_converter_e2e(name_browser)
- 
-    return
- 
+def simulate_file_loading(progress_bar, popup, completion_callback=None):
+    """
+    Simulate file loading process by updating the progress bar.
+    """
+    for i in range(100):
+        time.sleep(0.05)  # Simulate time-consuming operation
+        progress_bar['value'] += 1
+        popup.update_idletasks()
+    time.sleep(0.5)  # Hold the completed progress bar for a short time
+    if completion_callback:
+        completion_callback()
+
+def show_progress_bar(master, completion_callback=None):
+    """
+    Show a progress bar in a popup window.
+    """
+    popup = Toplevel(master)
+    popup.title("Loading File")
+    popup.geometry("300x50+{}+{}".format(master.winfo_x() + 50, master.winfo_y() + 50))
+
+    progress_bar = ttk.Progressbar(popup, orient=tk.HORIZONTAL, length=280, mode='determinate')
+    progress_bar.pack(pady=10)
+
+    # Start a thread to simulate file loading and update the progress bar
+    threading.Thread(target=simulate_file_loading, args=(progress_bar, popup, completion_callback), daemon=True).start()
+    return popup 
+
+selected_file_path = None
+
 # display file button
 def file_upload_btn(master, table_select):
-    def browse():
-        f_path = askopenfilename(initialdir="/", title="Select File", filetypes=(("PNG files", "*.png*"), ("All Files", "*.*")))
-        if f_path:  # If a file was selected
-            name_browser = os.path.basename(f_path)
+    global selected_file_path
+
+    def oct_conversion_thread(oct_f_path):
+        tab_names_list = [
+            ["Raw OCT-A"],  # Names for tabs in the first frame
+            ["Segmented Map", "Skeletonized Map", "AVA Map"],  # Names for tabs in the second frame
+            ["Raw OCT-B"],  # Names for tabs in the third frame
+            ["Contour Mapping", "Layer Segmenter"]  # Names for tabs in the fourth frame
+        ]
+        def run_conversion():
+            oct_conversion(oct_f_path)
+            name_browser = os.path.basename(oct_f_path)
             file_name(master, table_select, name_browser)
-            
+            tabs(master, frames, num_tabs_list, file_name, tab_names_list)
+            popup.destroy()  # Close the popup window once conversion is done
+            upload_file_btn.config(state="normal")
+
+       # Create a popup window for the progress bar
+        popup = Toplevel(master)
+        popup.title("Converting OCT File")
+        popup.geometry("300x100")  # Adjust the size as needed
+        popup.configure(bg='white')  # White background for the popup window
+
+        karla_font = tkfont.Font(family="Karla", size=11)
+        popup_label = Label(popup, text="Converting, please wait...", font=karla_font, bg='white', fg='black')
+        popup_label.pack(pady=10)
+
+        # Configure the progress bar with custom colors
+        style = ttk.Style()
+        style.theme_use('default')
+        style.configure("custom.Horizontal.TProgressbar", 
+                        background='#008dd2', troughcolor='#f9f9f9')
+        
+        progress = ttk.Progressbar(popup, style="custom.Horizontal.TProgressbar", 
+                                   orient="horizontal", mode="indeterminate", length=280)
+        progress.pack(pady=10)
+        progress.start(10)
+
+        upload_file_btn.config(state="disabled")  # Disable the button while processing
+        threading.Thread(target=run_conversion).start()
+
+    def browse():
+        global selected_file_path
+        tab_names_list = [
+            ["Raw OCT-A"],  # Names for tabs in the first frame
+            ["Segmented Map", "Skeletonized Map", "AVA Map"],  # Names for tabs in the second frame
+            ["Raw OCT-B"],  # Names for tabs in the third frame
+            ["Contour Mapping", "Layer Segmenter"]  # Names for tabs in the fourth frame
+        ]
+
+        f_path = askopenfilename(initialdir="/", title="Select File", filetypes = (
+        ("PNG files", "*.png"),
+        ("OCT files", "*.oct"),    # Assuming .oct is the extension for OCT files
+        ("FDS files", "*.fds"),    # Assuming .fds is the extension for FDS files
+        ("FDA files", "*.fda"),    # Assuming .fda is the extension for FDA files
+        ("Image files", "*.img"),  # Assuming .img is the extension for IMG files
+        ("DICOM files", "*.dcm"),  # Assuming .dcm is the extension for DICOM files
+        ("E2E files", "*.e2e"),    # Assuming .e2e is the extension for E2E files
+        ("All Files", "*.*")))
+        
+        if f_path:  # If a file was selected
+            # selected_file_path = os.path.splitext(f_path)[0]  # Update the global variable
+            selected_file_path = f_path
+            oct_conversion_thread(f_path)
     
     upload_file_btn = Button(master, text="Choose File", command=browse, borderwidth=2, bg='gray', font="Karla 10", fg='black')
     upload_file_btn.place(x=340, y=129, width=100, height=25)
 
+    progress = ttk.Progressbar(master, orient="horizontal", mode="indeterminate")
+
     return upload_file_btn
 
+#oct-converter
+def oct_conversion(oct_f_path):
+    file_type = os.path.splitext(oct_f_path)[1].upper().replace(".", "")
 
-# function to open a new window 
+    if file_type == 'OCT':
+        OCT.oct_converter_poct(oct_f_path)
+    if file_type == 'oct':
+        OCT.oct_converter_boct(oct_f_path)
+    if file_type == 'fds':
+        OCT.oct_converter_fds(oct_f_path)
+    if file_type == 'fda':
+        OCT.oct_converter_fda(oct_f_path)
+    if file_type == 'img':
+        OCT.oct_converter_img(oct_f_path)
+    if file_type == 'dcm':
+        OCT.oct_converter_dcm(oct_f_path)
+    if file_type == 'e2e':
+        OCT.oct_converter_e2e(oct_f_path)
+ 
+    return
+
+ # function to open a new window 
 # on a button click
 def openDiagsoneWindow():  
     # Toplevel object which will 
@@ -292,7 +459,7 @@ def selectScanTabel(window,table_data):
     for i, (file_name, date_time, file_type) in enumerate(table_data):
         table.insert("", "end", values=(file_name, date_time, file_type), tags=('evenrow' if i % 2 == 0 else 'oddrow',))
 
-    def on_row_selected(event):
+def on_row_selected(event):
         # Get the Treeview widget
         tree = event.widget
         
@@ -304,6 +471,13 @@ def selectScanTabel(window,table_data):
         
         # Access individual values assuming a tuple structure (file_name, date_time, file_type)
         file_name, date_time, file_type = item_values
+        tab_names_list = [
+            ["Raw OCT-A"],  # Names for tabs in the first frame
+            ["Segmented Map", "Skeletonized Map", "AVA Map"],  # Names for tabs in the second frame
+            ["Raw OCT-B"],  # Names for tabs in the third frame
+            ["Contour Mapping", "Layer Segmenter"]  # Names for tabs in the fourth frame
+        ]
+        tabs(master, frames, num_tabs_list, file_name, tab_names_list)
         file_name = file_name.split(".")[0]
         
         display_name(master,file_name)
@@ -325,8 +499,8 @@ def selectScanTabel(window,table_data):
     style.configure('evenrow', background="#f5f5f5")
     style.configure('oddrow', background="#ffffff")
 
-
     return table 
+
 
 # function for displaying retinal details
 def retinaDetailsTabel(window2):
@@ -399,42 +573,164 @@ def retinaDetailsTabel(window2):
     table.heading("Feature", anchor="w", text=" Feature")
     table.heading("Measurement", anchor="w", text=" Measurement")
 
-def tabs(master, frames, num_tabs_list):
+def layerDetails(master):
+    style = ttk.Style()
+    # Configure the style to have a white background
+    style.configure('My.TFrame', background='white')
+    style.configure('TLabel', background='white')
+    style.configure('TCombobox', fieldbackground='white', background='white')
+    style.configure('TEntry', fieldbackground='white', background='white')
+    style.configure('TCheckbutton', background='white')
+
+    frame = ttk.Frame(master, padding="10", style='My.TFrame')
+    frame.place(x=118, y=485)
+
+    # Create labels with white background
+    from_label = ttk.Label(frame, text="From:", font="Karla 10", style='TLabel')
+    to_label = ttk.Label(frame, text="To:", font="Karla 10", style='TLabel')
+    thickness_label = ttk.Label(frame, text="Thickness:", font="Karla 10", style='TLabel')
+
+    # Place labels with uniform padding
+    from_label.grid(row=0, column=0, sticky='W', padx=10, pady=5)
+    to_label.grid(row=1, column=0, sticky='W', padx=10, pady=5)
+    thickness_label.grid(row=2, column=0, sticky='W', padx=10, pady=5)
+
+    # Create dropdown menus with white background
+    from_combo = ttk.Combobox(frame, values=["LAYER 1", "LAYER 2", "LAYER 3"], state="readonly", width=15, style='TCombobox')
+    to_combo = ttk.Combobox(frame, values=["LAYER 1", "LAYER 2", "LAYER 3"], state="readonly", width=15, style='TCombobox')
+
+    # Place dropdown menus with uniform padding
+    from_combo.grid(row=0, column=1, padx=10, pady=5, sticky='EW')
+    to_combo.grid(row=1, column=1, padx=10, pady=5, sticky='EW')
+
+    # Create thickness entry with white background
+    thickness_entry = ttk.Entry(frame, width=18, style='TEntry')
+    thickness_entry.grid(row=2, column=1, padx=10, pady=5, sticky='EW')
+
+    # Create checkboxes with white background
+    check_fovea = ttk.Checkbutton(frame, text="Fovea", style='TCheckbutton')
+    check_parafovea = ttk.Checkbutton(frame, text="Parafovea", style='TCheckbutton')
+    check_perifovea = ttk.Checkbutton(frame, text="Perifovea", style='TCheckbutton')
+
+    # Place checkboxes with uniform padding
+    check_fovea.grid(row=0, column=2, padx=25, pady=5, sticky='W')
+    check_parafovea.grid(row=1, column=2, padx=25, pady=5, sticky='W')
+    check_perifovea.grid(row=2, column=2, padx=25, pady=5, sticky='W')
+
+    # Adjust frame column configurations for alignment
+    frame.columnconfigure(1, weight=1)  # Allows the column with comboboxes to expand
+
+def display_image_on_tab(image_path, tab_frame):
+    # Load the image
+    img = Image.open(image_path)
+    img_resized = img.resize((400, 300))  # Resize the image to fit the tab
+    img_photo = ImageTk.PhotoImage(img_resized)
+
+    # Display the image in a label within the tab frame
+    label = tk.Label(tab_frame, image=img_photo)
+    label.image = img_photo  # Keep a reference to the image
+    label.pack(padx=10, pady=10)
+
+def initialize_tabs():
+    frames = [frame, frame2, frame3, frame4]  # List of frames for the tabs
+    num_tabs_list = [0, 2, 0, 1]  # Initially, no sub-tabs
+    selected_file_path = None  # No file selected initially
+    tab_names_list = [
+    ["Raw OCT-A"],  # Names for tabs in the first frame
+    ["Segmented Map", "Skeletonized Map", "AVA Map"],  # Names for tabs in the second frame
+    ["Raw OCT-B"],  # Names for tabs in the third frame
+    ["Contour Mapping", "Layer Segmenter"]  # Names for tabs in the fourth frame
+    ]
+    tabs(master, frames, num_tabs_list, selected_file_path, tab_names_list)
+
+def tabs(master, frames, num_tabs_list, selected_file_path, tab_names_list):
     style = ttk.Style()
     theme_name = style.theme_use('clam')
     style.configure(f"{theme_name}.TNotebook", background='white')
     style.configure(f"{theme_name}.TNotebook.Tab", background='white')
 
+    # Configure the background color for the content area of the tabs
+    style.configure(f"{theme_name}.TFrame", background='white')
+
     for i, frame in enumerate(frames):
-        # Main tab control
-        main_tabControl = ttk.Notebook(frame)
+        # Check if the frame already has a tab control and destroy it
+        for widget in frame.winfo_children():
+            widget.destroy()
+
+        # Create the main tab control 
+        main_tabControl = ttk.Notebook(frame, style=f"{theme_name}.TNotebook")
         main_tabControl.config(width=400, height=300)  # Set the initial size of the notebook
 
-        # Main tab
-        main_tab = ttk.Frame(main_tabControl)
-        main_tabControl.add(main_tab, text=f"Tab 1")
+        # Add tabs with names from the tab_names_list
+        for j in range(num_tabs_list[i] + 1):  # +1 for the main tab
+            tab_name = tab_names_list[i][j] if j < len(tab_names_list[i]) else f"Tab {j + 1}"
+            tab = ttk.Frame(main_tabControl)
+            main_tabControl.add(tab, text=tab_name)
 
-        # Add the image to the main tab
-        image_files = ["test_image1.png", "test_image2.png", "test_image3.png", "test_image4.png"]
-        try:
-            img = Image.open(image_files[i])
-            img_resized = img.resize((400, 300))
-            img_photo = ImageTk.PhotoImage(img_resized)
-            label = tk.Label(main_tab, image=img_photo)
-            label.image = img_photo  # keep a reference to the image
-            label.pack(padx=10, pady=10)
-        except Exception as e:
-            print(f"Error loading image {image_files[i]}: {e}")
-
-
-        # Add sub-tabs as specified by num_tabs_list
-        for j in range(num_tabs_list[i]):
-            sub_tab = ttk.Frame(main_tabControl)
-            main_tabControl.add(sub_tab, text=f"Tab {j + 2}")
+            # Add the image to the main tab if it's the first tab and selected_file_path is provided
+            if j == 0 and selected_file_path and isinstance(selected_file_path, str) and len(selected_file_path) >= 3:
+                #Add code to add image to the tab, as per the specific file type handling and requirements
+                if selected_file_path[-3:] == "png":
+                    try:
+                        print(selected_file_path)
+                        img = Image.open(selected_file_path)
+                        img_resized = img.resize((400, 300))
+                        img_photo = ImageTk.PhotoImage(img_resized)
+                        label = tk.Label(tab, image=img_photo)
+                        label.image = img_photo  # keep a reference to the image
+                        label.pack(padx=10, pady=10)
+                    except Exception as e:
+                        print(f"Error loading image from {selected_file_path}: {e}")
+                if selected_file_path[-3:] == "OCT":
+                        print(selected_file_path)
+                        base_path = os.path.splitext(selected_file_path)[0]
+                        full_path = os.path.join(base_path, "raw_images", "image_0_256.png")
+                        image_to_display = full_path
+                        if tab_name == "Contour Mapping":
+                            contour_mapping(full_path)
+                            contour_path = os.path.join(base_path, "ContouredImages", "contoured_image.png")
+                            image_to_display = contour_path
+                        try:
+                                img = Image.open(image_to_display)
+                                img_resized = img.resize((400, 300))
+                                img_photo = ImageTk.PhotoImage(img_resized)
+                                label = tk.Label(tab, image=img_photo)
+                                label.image = img_photo  # keep a reference to the image
+                                label.pack(padx=10, pady=10)
+                        except Exception as e:
+                            print(f"Error loading image from {full_path}: {e}")
 
         # Pack the main tab control
         main_tabControl.pack(expand=1, fill="both")
+
+        # Store the reference to the Notebook widget in the frame for later destruction
+        frame.notebook = main_tabControl
      
+########## CONTOUR MAPPING #########
+def contour_mapping(filepath):
+    # Read the B-scan image
+    b_scan = cv2.imread(filepath, cv2.IMREAD_GRAYSCALE)
+
+    # Apply GaussianBlur to reduce noise
+    blurred = cv2.GaussianBlur(b_scan, (9, 9), 1)
+
+    # Apply Canny edge detection
+    edges = cv2.Canny(blurred, 30, 70)
+
+    # Find contours
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Draw contours on the original grayscale image
+    result_image = cv2.cvtColor(b_scan, cv2.COLOR_GRAY2BGR)
+    cv2.drawContours(result_image, contours, -1, (0, 255, 0), 1)
+
+    # Save the image with contours
+    output_folder = os.path.join("/Users/Shriya Gandotra/Desktop/Senior design/oct_test1", 'ContouredImages')
+    os.makedirs(output_folder, exist_ok=True)
+
+    output_filepath = os.path.join(output_folder, 'contoured_image.png')
+    cv2.imwrite(output_filepath, result_image)
+
 #---------------- Image 1 -----------------------#
 frame = Frame(master, width=600, height=600)
 frame.pack()
@@ -461,13 +757,13 @@ logo_img = "logo.png"
 start_screen(master)
 opthotool_techlology(master)
 upload(master)
-retina(master)
+tools(master)
 diag_button(master)
 display_eye_side(master)
 table_select = selectScanTabel(master,data)
 file_upload_btn(master, table_select)
 file_name(master,table_select,name_borwser)
-retinaDetailsTabel(master)
+initialize_tabs()
 frames = [frame, frame2,frame3, frame4]  # Create a list of frames for the tabs
 num_tabs_list = [0, 2, 0, 1]  # Example number of sub-tabs for each main tab
 tabs(master, frames, num_tabs_list)
