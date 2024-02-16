@@ -1,14 +1,11 @@
 # OCT Layer Measurement Tool
-# Authors: Lauren Bourque & Yousef Abuelanien
+# Authors: Lauren Bourque
 
 # Libraries
 from PIL import Image
 import os
-import pandas as pd
-import colorir.color_class
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import mstats
+import pandas as pd
 
 
 def run_code():
@@ -16,35 +13,35 @@ def run_code():
     The main function used to run the code
     """
     image: Image = get_image()
-    print(image)
-    layer_data: dict[pd.DataFrame] = get_layer_data(image_in=image)
-    all_layer_thicknesses: list[pd.Series] = calculate_thicknesses(layers_in=layer_data, image_in=image)
-    avg_thicknesses: list[int] = calculate_avg_thicknesses(image_in=image, layer_thicknesses_in=all_layer_thicknesses)
-    print(avg_thicknesses)
-    create_plots(all_layer_thicknesses=all_layer_thicknesses, image_in=image)
+
+    # Get the calculated thicknesses
+    layer_thicknesses = calculate_thicknesses(image_in=image)
+
+    print(layer_thicknesses)
 
 
 def get_image():
+
     """
     Gets the current working directory and accesses the image
     :returns image: Image -> the segmented OCT scan used for measurement
     """
     script_dir = os.path.dirname(os.path.realpath(__file__))
     filename = "Images/test_image.png"
-    filepath = os.path.join(script_dir, filename) # Segmented image filepath
+    filepath = os.path.join(script_dir, filename)  # Segmented image filepath
     image = Image.open(filepath)
     return image
 
 
-def get_layer_data(image_in: Image):
+def calculate_thicknesses(image_in: Image):
     """
-    Stores the x and y coordinates of the different pixel values in each layer. Creates a dataframe for each color (layer)
+    Stores the x and y coordinates of the different pixel values in each layer.
+    Creates a dataframe for each color (layer)
     :param image_in (Image) -> the segmented OCT scan
-    :returns layers (list[pd.Dataframe]) -> A list of 8 DataFrames representing each layer. Each DataFrame contains the x and y coordinates for all the pixels in this layer
+    :returns white_pixel_arrays (list) -> A list of 9 arrays containing white pixel coordinates.
     """
     # List of RGB colors to get pixel data from
     colors = [
-        '#00007f',  # Background color (Dark Blue)
         '#e4ff12',  # Color 1 (Yellow)
         '#15ffe1',  # Color 2 (Teal)
         '#ff9400',  # Color 3 (Orange)
@@ -55,172 +52,10 @@ def get_layer_data(image_in: Image):
         '#7f0000',  # Color 8 (Burgundy)
     ]
 
-    # Dictionary of lists (Starts with Color 1 [Yellow])
-    layers = {hex_color: [] for hex_color in colors[1:]}
-
-    width, height = image_in.size
-
-    # Convert the image to a NumPy array for faster processing
-    image_array = np.array(image_in)
-
-    # Loop through the pixels
-    for y in range(height):
-        for x in range(width):
-            # Get the RGB value of the current pixel and convert to hex
-            pixel_value = image_array[y, x]
-            hex_value = rgb_to_hex(pixel_value)
-            closest_color = calculate_hue(target=hex_value, tints=colors)
-
-            # Make sure the color isn't the background color
-            if closest_color is not None and closest_color != colors[0]:  # Hex Color
-                layers[closest_color].append({'x': x, 'y': y})
-
-    # Convert lists of dictionaries to DataFrames
-    layers = {color: pd.DataFrame(data) for color, data in layers.items()}
-
-    return layers
-
-
-def rgb_to_hex(rgb):
-    """
-    Convert RGB tuple to hexadecimal color code
-    :param rgb (RGB) -> the rgb value to convert
-    :returns hex_color: str -> the RGB color represented in hexadecimal format
-    """
-    hex_color = "#{:02x}{:02x}{:02x}".format(*rgb)
-    return hex_color
-
-
-def calculate_hue(target, tints):
-    """
-    Finds the closest color in a list of provided hues
-    :param target: str -> the color value to match to the hues in hexadecimal format
-    :param tints: list(str) -> the list of hues in hexadecimal format
-    :returns closest[0]: str -> the color best matching the target represented in hexadecimal format
-    """
-    target_hue = colorir.color_class.HexRGB(target).hsl()[0]
-    closest = (None, 180)
-    for tint in tints:
-        hue = colorir.color_class.HexRGB(tint).hsl()[0]
-        hue_dist = min((hue - target_hue) % 360, (target_hue - hue) % 360)
-        if hue_dist < closest[1]:
-            closest = (tint, hue_dist)
-    return closest[0]
-
-
-def calculate_thicknesses(layers_in: dict[pd.DataFrame], image_in: Image):
-    """
-    Stores the x and y coordinates of the different pixel values in each layer. Creates a dataframe for each color (layer)
-    :param layers_in (list of DataFrame) -> the list of DataFrames representing each layer
-    :param image_in: Image -> the segmented OCT scan
-    :returns all_layer_thicknesses -> list of 8 pandas Series objects containing the layer thicknesses for each pixel along the x axis for each layer
-    """
-    width, height = image_in.size
-
-    # A list of 8 pandas Series objects containing the layer thickness for each pixel width in each layer
-    all_layer_thicknesses: list = []
-
-    # Loop through the Dataframes
-    for key, layer in layers_in.items():
-        if not layer.empty:
-            # Create a Pandas Series called layer_thicknesses to store the thicknesses for one layer
-            layer_thicknesses = pd.Series(name='layer_thicknesses')
-
-            for x_val in range(width):
-                # Filter the DataFrame for the given x value
-                subset_layer = layer[layer['x'] == x_val]
-
-                if not subset_layer.empty:
-                    # Find the biggest and smallest y values
-                    biggest_y = find_max_y_val(subset_in=subset_layer)
-                    smallest_y = find_min_y_val(subset_in=subset_layer)
-
-                    if biggest_y is not None and smallest_y is not None:
-                        # Calculate the difference
-                        thickness = biggest_y - smallest_y + 1
-
-                        # Append the value to the Series
-                        layer_thicknesses.loc[x_val] = thickness
-
-        # Add the thickness values for the one layer to the list of layer thicknesses
-        all_layer_thicknesses.append(layer_thicknesses)
-
-    return all_layer_thicknesses
-
-
-def find_min_y_val(subset_in: pd.DataFrame):
-    """
-    Finds the minimum y value in the DataFrame, making sure that there's another pixel next to it so we're not choosing a random pixel
-    :param subset_in: pd.DataFrame -> the x column of values to find the minimum y value for
-    :returns current_value -> the minimum y value
-    """
-    # Sort values in the 'y' column from least to greatest
-    subset_sorted = subset_in.sort_values(by='y')
-
-    # Iterate through the sorted values using the index
-    for index, value in subset_sorted.iterrows():
-        current_value = value['y']
-
-        # Check if there is a value 1 greater than the current value
-        has_one_greater = (subset_sorted['y'] == current_value + 1).any()
-
-        # If there is, return the current value
-        if has_one_greater:
-            return current_value
-
-
-def find_max_y_val(subset_in: pd.DataFrame):
-    """
-    Finds the maximum y value in the DataFrame, making sure that there's another pixel next to it so we're not choosing a random pixel
-    :param subset_in: pd.DataFrame -> the x column of values to find the maximum y value for
-    :returns current_value -> the maximum y value
-    """
-    # Sort values in the 'y' column from greatest to least
-    subset_sorted = subset_in.sort_values(by='y', ascending=False)
-
-    # Iterate through the sorted values using the index
-    for index, value in subset_sorted.iterrows():
-        current_value = value['y']
-
-        # Check if there is a value 1 greater than the current value
-        has_one_less = (subset_sorted['y'] == current_value - 1).any()
-
-        # If there is, return the current value
-        if has_one_less:
-            return current_value
-
-
-def calculate_avg_thicknesses(image_in: Image, layer_thicknesses_in: list[pd.Series]):
-    """
-    Calculates the average thicknesses for the provided thickness values
-    :param image_in Image -> image passed in
-    :param layer_thicknesses_in (list[pd.Series]) -> list of 8 pandas Series objects containing the layer thicknesses for each pixel along the x axis for each layer
-    :returns avg_thicknesses (list[int]) -> list of 8 average thickness values
-    """
-    avg_thicknesses = []
-
-    # Set the winsorizing limits, e.g., 1% and 99%
-    lower_limit = 0.01
-    upper_limit = 0.98
-
-    # Calculates the mean value for each Pandas Series
-    for layer in layer_thicknesses_in:
-        # Winsorize the data to exclude extreme values
-        winsorized_data = mstats.winsorize(layer, limits=(lower_limit, upper_limit))
-
-        mean_value = winsorized_data.mean()
-        width, height = image_in.size
-        mean_value = (mean_value/height) * 6 * 1000  # Value in micrometers
-        avg_thicknesses.append(mean_value)
-
-    return avg_thicknesses
-
-
-def create_plots(all_layer_thicknesses: list[pd.Series], image_in: Image):
-    # List of layer acronyms for graph labels
-    layer_acronyms = [
+    # Corresponding English names for each color
+    layer_names = [
         'Nerve Fiber Layer',
-        'GCL+IPL',
+        'GCL + IPL',
         'Inner Nuclear Layer',
         'Outer Plexiform Layer',
         'Outer Nuclear Layer',
@@ -229,32 +64,46 @@ def create_plots(all_layer_thicknesses: list[pd.Series], image_in: Image):
         'Choroid'
     ]
 
-    width, height = image_in.size
+    # Convert colors to RGB format
+    colors_rgb = [tuple(int(color[i:i + 2], 16) for i in (1, 3, 5)) for color in colors]
 
-    # Create a single plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+    # Load image and convert to numpy array
+    img_array = np.array(image_in)
 
-    for index, layer in enumerate(all_layer_thicknesses):
-        # Scale the x and y values
-        modified_x_values = (layer.index / width) * 6  # Values are in millimeters
-        modified_y_values = (layer.values / height) * 6000  # Values are in micrometers
+    # Remove alpha channel if present
+    if img_array.shape[-1] == 4:
+        img_array = img_array[:, :, :3]
 
-        # Filter out y values greater than 1000
-        modified_y_values = [y if y <= 1000 else None for y in modified_y_values]
+    # Initialize dictionary to store color information
+    color_info = {}
 
-        # Plot on the scatter plot
-        ax.plot(modified_x_values, modified_y_values, marker='o', markersize=4, linestyle='-', linewidth=1, label=layer_acronyms[index])
+    # Get image width and height
+    img_width, img_height = img_array.shape[1], img_array.shape[0]
 
-    # Set labels and title
-    ax.set_xlabel('Vertical Distance (mm)')
-    ax.set_ylabel('Thickness (micrometers)')
-    ax.set_title('Plot of Layer Thicknesses')
+    # Iterate over each color
+    for idx, color_rgb in enumerate(colors_rgb):
+        # Check if any pixel matches the current color
+        mask = np.all(img_array == color_rgb, axis=-1)
+        # Calculate total number of pixels for the color
+        total_pixels = np.sum(mask)
+        # Divide by image width to normalize by image size
+        pixels_per_width = total_pixels / img_width
+        # Divide by image height and multiply by 6000 to get layer thickness in micrometers (assumes image is 6mm by 6mm)
+        layer_thickness = (pixels_per_width / img_height) * 6000
+        # Store color information including hexadecimal value and layer thickness
+        color_info[f'Color_{idx+1}'] = {
+            'Layer': layer_names[idx],  # Adding the B Scan layer names
+            'RGB': color_rgb,
+            'Hex': colors[idx],  # Adding the hexadecimal value
+            'TotalPixels': total_pixels,
+            'PixelsPerWidth': pixels_per_width,
+            'LayerThickness': layer_thickness  # Adding the layer thickness
+        }
 
-    # Add legend
-    ax.legend()
+    # Convert color information to DataFrame
+    color_df = pd.DataFrame.from_dict(color_info, orient='index')
 
-    # Show the plot
-    plt.show()
+    return color_df
 
 
 # Executes the code
