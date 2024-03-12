@@ -1,65 +1,55 @@
-# Contour Mapping Tool
-# Authors: Lauren Bourque
-
 # Libraries
-from PIL import Image
+import cv2
 import os
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def run_code():
     """
     The main function used to run the code
     """
-    image: Image = get_image()
+    image = get_image()
 
     # Get the modified image
     modified_image = get_layer_data(image_in=image)
 
 
 def get_image():
-
     """
     Gets the current working directory and accesses the image
-    :returns image: Image -> the segmented OCT scan used for measurement
+    :returns image: ndarray -> the segmented OCT scan used for measurement
     """
     script_dir = os.path.dirname(os.path.realpath(__file__))
     filename = "Images/test_image.png"
     filepath = os.path.join(script_dir, filename)  # Segmented image filepath
-    image = Image.open(filepath)
+    image = cv2.imread(filepath)
     return image
 
 
-def get_layer_data(image_in: Image):
+def get_jet_colormap():
+    """
+    Generate Jet colormap as a list of RGB tuples
+    :returns colors: list -> List of RGB tuples representing the Jet colormap
+    """
+    cmap = plt.cm.jet
+    norm = plt.Normalize(vmin=0, vmax=255)
+    jet_colormap = cmap(norm(np.arange(256)))
+    colors = [tuple((jet_colormap[i] * 255).astype(int)) for i in range(jet_colormap.shape[0])]
+    return colors
+
+
+def get_layer_data(image_in):
     """
     Stores the x and y coordinates of the different pixel values in each layer.
     Creates a dataframe for each color (layer)
-    :param image_in (Image) -> the segmented OCT scan
-    :returns layers (list[pd.Dataframe]) -> A list of 8 DataFrames representing each layer.
-    Each DataFrame contains the x and y coordinates for all the pixels in this layer
+    :param image_in (ndarray) -> the segmented OCT scan
+    :returns new_image (ndarray) -> Modified image with contours
     """
-    # List of RGB colors to get pixel data from
-    colors = [
-        '#00007f',  # Background color (Dark Blue)
-        '#e4ff12',  # Color 1 (Yellow)
-        '#15ffe1',  # Color 2 (Teal)
-        '#ff9400',  # Color 3 (Orange)
-        '#0000ff',  # Color 4 (Darker Blue)
-        '#ff1d00',  # Color 5 (Red)
-        '#7cff79',  # Color 6 (Green)
-        '#0080ff',  # Color 7 (Sky Blue)
-        '#7f0000',  # Color 8 (Burgundy)
-    ]
+    # Get Jet colormap colors
+    colors_rgb = get_jet_colormap()
 
-    # Convert colors to RGB format
-    colors_rgb = [tuple(int(color[i:i + 2], 16) for i in (1, 3, 5)) for color in colors]
-
-    # Load image and convert to numpy array
-    img_array = np.array(image_in)
-
-    # Remove alpha channel if present
-    if img_array.shape[-1] == 4:
-        img_array = img_array[:, :, :3]
+    # Convert image to RGB
+    img_array = cv2.cvtColor(image_in, cv2.COLOR_BGR2RGB)
 
     # Initialize new image array with ones (white)
     new_img_array = np.ones_like(img_array) * 255
@@ -70,15 +60,15 @@ def get_layer_data(image_in: Image):
         new_img_array[mask] = [0, 0, 0]  # Set matching pixels to black
 
     # Create new image from the modified array
-    new_image = Image.fromarray(new_img_array.astype(np.uint8), 'RGB')
+    new_image = cv2.cvtColor(new_img_array, cv2.COLOR_RGB2BGR)
 
     # Save the image with contours
     script_dir = os.path.dirname(os.path.realpath(__file__))
     output_folder = os.path.join(script_dir, 'Images')
     os.makedirs(output_folder, exist_ok=True)
 
-    output_filepath = os.path.join(output_folder, 'zeroed_image.png')
-    new_image.save(output_filepath)
+    output_filepath = os.path.join(output_folder, 'contoured_image.png')
+    cv2.imwrite(output_filepath, new_image)
 
     return new_image
 
