@@ -7,7 +7,7 @@ import math
 from PIL import Image, ImageTk
 
 # Global variables to store point coordinates and line
-IMAGE_DIM = 6  # 6mm x 6mm assumption
+IMAGE_DIM = 6000  # 6mm x 6mm assumption
 height = 0  # height per pixel
 width = 0  # width per pixel
 point1 = None
@@ -17,6 +17,8 @@ point2_oval = None
 line = None
 measure_mode = False
 image_loaded = False
+result_label = 0
+distance = 0
 
 def calc_image_size(pixel_width, pixel_height):
     global width, height, IMAGE_DIM
@@ -26,14 +28,21 @@ def calc_image_size(pixel_width, pixel_height):
 
 # Function to calculate the distance
 def calculate_distance():
-    global point1, point2, line
+    global point1, point2, line, distance, result_label
     if point1 and point2:
         distance = math.sqrt(((point2[0] - point1[0]) * width) ** 2 + ((point2[1] - point1[1]) * height) ** 2)
-        result_label.config(text=f"Distance: {distance:.2f} mm")
+        x1, y1 = point1
+        x2, y2 = point2
+        # Calculate midpoint of the line
+        midpoint = ((x1 + x2) / 2, (y1 + y2) / 2)
+        # Update the text of the result_label
+        result_label = tk.Label(text=f"{distance:.2f} um")
+        result_label.place(x=midpoint[0], y=midpoint[1], anchor="center")
         # Draw a line between the two points
         if line:
             canvas.delete(line)
         line = canvas.create_line(point1[0], point1[1], point2[0], point2[1], fill="red", width=2)
+
 
 # Function to set the selected point
 def set_point(event):
@@ -66,9 +75,11 @@ def toggle_measure_mode():
             canvas.delete(point2_oval)
         if line:
             canvas.delete(line)
+        if result_label:
+            result_label.destroy()
         point1 = None
         point2 = None
-        result_label.config(text="Distance: N/A")
+    
 
 # Function to open an image file
 def open_image():
@@ -114,9 +125,5 @@ measure_icon = ImageTk.PhotoImage(measure_icon)
 #measure_button = tk.Button(button_frame, text="Meaurement Tool", command=toggle_measure_mode)
 measure_button = tk.Button(button_frame, image=measure_icon, command=toggle_measure_mode)
 measure_button.grid(row=0, column=1)
-
-# Show Distance
-result_label = tk.Label(button_frame, text="Distance: N/A")
-result_label.grid(row=1, column=0)
 
 root.mainloop()
