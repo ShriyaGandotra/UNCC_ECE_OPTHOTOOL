@@ -27,7 +27,7 @@ def get_image():
     :returns image: Image -> the segmented OCT scan used for measurement
     """
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    filename = "Images/test_image.png"
+    filename = "Images/predicted_147.png"
     filepath = os.path.join(script_dir, filename)  # Segmented image filepath
     image = Image.open(filepath)
     return image
@@ -42,14 +42,14 @@ def calculate_thicknesses(image_in: Image):
     """
     # List of RGB colors to get pixel data from
     colors = [
-        '#e4ff12',  # Color 1 (Yellow)
-        '#15ffe1',  # Color 2 (Teal)
-        '#ff9400',  # Color 3 (Orange)
+        '#feff01',  # Color 1 (Yellow)
+        '#02fffe',  # Color 2 (Teal)
+        '#ff8000',  # Color 3 (Orange)
         '#0000ff',  # Color 4 (Darker Blue)
-        '#ff1d00',  # Color 5 (Red)
-        '#7cff79',  # Color 6 (Green)
+        '#ff0000',  # Color 5 (Red)
+        '#82ff7e',  # Color 6 (Green)
         '#0080ff',  # Color 7 (Sky Blue)
-        '#7f0000',  # Color 8 (Burgundy)
+        '#800000',  # Color 8 (Burgundy)
     ]
 
     # Corresponding English names for each color
@@ -109,3 +109,4 @@ def calculate_thicknesses(image_in: Image):
 # Executes the code
 if __name__ == '__main__':
     run_code()
+
