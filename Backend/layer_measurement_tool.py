@@ -16,7 +16,6 @@ def run_code():
 
     # Get the calculated thicknesses
     layer_thicknesses = calculate_thicknesses(image_in=image)
-
     print(layer_thicknesses)
 
 
@@ -33,7 +32,7 @@ def get_image():
     return image
 
 
-def calculate_thicknesses(image_in: Image):
+def calculate_thicknesses(image_in: Image, layer1: int, layer2: int):
     """
     Stores the x and y coordinates of the different pixel values in each layer.
     Creates a dataframe for each color (layer)
@@ -103,10 +102,17 @@ def calculate_thicknesses(image_in: Image):
     # Convert color information to DataFrame
     color_df = pd.DataFrame.from_dict(color_info, orient='index')
 
-    return color_df
+    # Select the relevant rows based on indices layer1 and layer2
+    selected_layers = color_df.iloc[layer1 - 1:layer2]
+
+    # Sum the layer thickness values
+    total_thickness = selected_layers['LayerThickness'].sum()
+
+    return total_thickness
 
 
 # Executes the code
 if __name__ == '__main__':
     run_code()
+
 
