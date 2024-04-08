@@ -4,7 +4,7 @@ from skimage.morphology import skeletonize, remove_small_objects
 from skan import Skeleton, summarize
 from PIL import Image
 
-filepath = 'OCTATEST2.png'
+filepath = 'UNCC_ECE_OPTHOTOOL//Backend//OCTATEST2.png'
 
 #function for skeletonizing an OCTA image
 def skeletonize_image(filepath):
@@ -81,6 +81,10 @@ def OCTA_Features(filepath):
         if euc_distance[i] != 0:
             temp_BVT[i] = branch_distance[i]/euc_distance[i]
     BVT = np.mean(temp_BVT)
+    
+    BVD = round(BVD, 4)
+    VPI = round(VPI, 4)
+    BVT = round(BVT, 4)
     print('BVD: ', BVD, 'VPI: ', VPI, 'BVT: ', BVT)
     
     return BVD, VPI, BVT
