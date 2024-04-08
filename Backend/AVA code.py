@@ -9,7 +9,7 @@ import keras
 filepath = '/Users/hunte/Documents/Python/OCTATEST.png'
 model = 'Backend/Backend-Models\AVA_model_3.hdf5'
 
-def AVA_features(filepath, model):
+def AVA_save(filepath, model):
     pil_img = Image.open(filepath)
     pil_img = pil_img.resize([320,320])
     pil_img = pil_img.convert('RGB')
@@ -25,7 +25,6 @@ def AVA_features(filepath, model):
     ava_map = base_model.predict(tensor_img)
     ava_map = tf.squeeze(ava_map,axis = 0)
     pil_ava = keras.preprocessing.image.array_to_img(ava_map)
-    pil_ava.save('AVA_map.png')
 
     #create seperate artery and vein maps
     pil_ava = pil_ava.convert('RGB')
@@ -45,10 +44,11 @@ def AVA_features(filepath, model):
 
     #add together to create red and blue AV map
     av_map = ImageChops.add(red_a_map,blue_v_map)
-    #av_map.save('av_map.png')
-    #a_map.save('a_map.png')
-    #v_map.save('v_map.png')
+    av_map.save('av_map.png')
+    a_map.save('a_map.png')
+    v_map.save('v_map.png')
 
+def AVA_features(av_map, a_map, v_map):
     #count pixels and intensities for arteries
     a_pixels = 0
     v_pixels = 0
