@@ -83,6 +83,8 @@ def OCTA_Features(filepath):
     BVT = np.mean(temp_BVT)
     print('BVD: ', BVD, 'VPI: ', VPI, 'BVT: ', BVT)
     
+    return BVD, VPI, BVT
+    
 OCTA_Features(filepath)
         
         
