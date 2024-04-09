@@ -6,8 +6,8 @@ import PIL
 import tensorflow as tf
 import keras
 
-filepath = '/Users/hunte/Documents/Python/OCTATEST.png'
-model = 'Backend/Backend-Models\AVA_model_3.hdf5'
+filepath = 'OCTATEST2.png'
+model = 'ava//AVA_model_3.hdf5'
 
 def AVA_save(filepath, model):
     pil_img = Image.open(filepath)
@@ -48,7 +48,15 @@ def AVA_save(filepath, model):
     a_map.save('a_map.png')
     v_map.save('v_map.png')
 
-def AVA_features(av_map, a_map, v_map):
+AVA_save(filepath, model)
+
+a_path = 'a_map.png'
+v_path = 'v_map.png'
+
+def AVA_features(a_path, v_path):
+    a_map = Image.open(a_path)
+    v_map = Image.open(v_path)
+    
     #count pixels and intensities for arteries
     a_pixels = 0
     v_pixels = 0
@@ -72,11 +80,12 @@ def AVA_features(av_map, a_map, v_map):
     V_PID = 100/255 *(v_I/v_pixels)
     #AV_PID ratio calculation
     AV_PIDR = A_PID/V_PID
-    '''
+    
     print('A_PID = ', A_PID)
     print('V_PID = ', V_PID)
     print('AV_PIDR = ', AV_PIDR)
-    '''
+    
     return A_PID, V_PID, AV_PIDR
 
+AVA_features(a_path,v_path)
 
