@@ -62,22 +62,25 @@ def AVA_features(a_path, v_path):
     a_I = 0
     v_I = 0
     
+    a_map = a_map.convert('L')
+    v_map = v_map.convert('L')
+    
     for pixel in a_map.getdata():
-        if pixel != (0,0,0):
+        if pixel != (0):
             a_pixels += 1
     
     a_data = a_map.getdata()
-    a_I = sum(sum(pixel) for pixel in a_data)
+    a_I = sum(pixel for pixel in a_data)
    
 
     #count pixels and intensities for veins
     
     for pixel in v_map.getdata():
-        if pixel != (0,0,0):
+        if pixel != (0):
             v_pixels += 1
 
     v_data = v_map.getdata()
-    v_I = sum(sum(pixel) for pixel in v_data)
+    v_I = sum(pixel for pixel in v_data)
     
     #A_PID calculation
     A_PID = 100/255 *(a_I/a_pixels)
