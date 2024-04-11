@@ -48,10 +48,7 @@ def AVA_save(filepath, model):
     a_map.save('a_map.png')
     v_map.save('v_map.png')
 
-AVA_save(filepath, model)
-
-a_path = 'a_map.png'
-v_path = 'v_map.png'
+#AVA_save(filepath, model)
 
 def AVA_features(a_path, v_path):
     a_map = Image.open(a_path)
@@ -87,5 +84,9 @@ def AVA_features(a_path, v_path):
     
     return A_PID, V_PID, AV_PIDR
 
-AVA_features(a_path,v_path)
 
+
+a_path = 'a_map.png'
+v_path = 'v_map.png'
+
+AVA_features(a_path,v_path)
