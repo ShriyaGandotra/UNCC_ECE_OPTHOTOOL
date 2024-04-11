@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 from PIL import Image, ImageChops, ImageOps
-from keras.models import load_model
 import PIL
+
+from keras.models import load_model
 import tensorflow as tf
 import keras
 
@@ -48,7 +49,8 @@ def AVA_save(filepath, model):
     a_map.save('a_map.png')
     v_map.save('v_map.png')
 
-#AVA_save(filepath, model)
+AVA_save(filepath, model)
+
 
 def AVA_features(a_path, v_path):
     a_map = Image.open(a_path)
@@ -59,17 +61,23 @@ def AVA_features(a_path, v_path):
     v_pixels = 0
     a_I = 0
     v_I = 0
+    
     for pixel in a_map.getdata():
         if pixel != (0,0,0):
             a_pixels += 1
-    a_I = sum(list(sum(list(a_map.getdata()),())))
+    
+    a_data = a_map.getdata()
+    a_I = sum(sum(pixel) for pixel in a_data)
+   
 
     #count pixels and intensities for veins
+    
     for pixel in v_map.getdata():
         if pixel != (0,0,0):
             v_pixels += 1
 
-    v_I = sum(list(sum(list(v_map.getdata()),())))
+    v_data = v_map.getdata()
+    v_I = sum(sum(pixel) for pixel in v_data)
     
     #A_PID calculation
     A_PID = 100/255 *(a_I/a_pixels)
@@ -83,8 +91,6 @@ def AVA_features(a_path, v_path):
     print('AV_PIDR = ', AV_PIDR)
     
     return A_PID, V_PID, AV_PIDR
-
-
 
 a_path = 'a_map.png'
 v_path = 'v_map.png'
