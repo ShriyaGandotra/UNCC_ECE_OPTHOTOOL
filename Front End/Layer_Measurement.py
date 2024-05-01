@@ -8,26 +8,24 @@ import numpy as np
 from tkinter import *
 from PIL import Image
 
-def calculate_thicknesses(filepath, layer1: int, layer2: int):
+def calculate_thicknesses(image_data, layer1: int, layer2: int):
     """
-    Stores the x and y coordinates of the different pixel values in each layer.
-    Creates a dataframe for each color (layer)
-    :param image_in (Image) -> the segmented OCT scan
-    :returns white_pixel_arrays (list) -> A list of 9 arrays containing white pixel coordinates.
+    Calculates the thicknesses of specified layers within an image region.
+    :param image_data (numpy.ndarray): The cropped segmented OCT scan image data.
+    :param layer1 (int): Start layer index.
+    :param layer2 (int): End layer index.
+    :returns (str): Total thickness of the layers from 'layer1' to 'layer2'.
     """
-
-    image = Image.open(filepath)
-
-    # List of RGB colors to get pixel data from
+    # Define the color codes for different layers
     colors = [
         '#feff01',  # Color 1 (Yellow)
         '#02fffe',  # Color 2 (Teal)
         '#ff8000',  # Color 3 (Orange)
-        '#0000ff',  # Color 4 (Darker Blue)
+        '#0000ff',  # Color 4 (Blue)
         '#ff0000',  # Color 5 (Red)
         '#82ff7e',  # Color 6 (Green)
         '#0080ff',  # Color 7 (Sky Blue)
-        '#800000',  # Color 8 (Burgundy)
+        '#800000',  # Color 8 (Maroon)
     ]
 
     # Corresponding English names for each color
@@ -42,55 +40,39 @@ def calculate_thicknesses(filepath, layer1: int, layer2: int):
         'Choroid'
     ]
 
-    # Convert colors to RGB format
-    colors_rgb = [tuple(int(color[i:i + 2], 16) for i in (1, 3, 5)) for color in colors]
+    # Convert colors to RGB tuples
+    colors_rgb = [tuple(int(color[i:i+2], 16) for i in (1, 3, 5)) for color in colors]
 
-    # Load image and convert to numpy array
-    img_array = np.array(image)
+    # Initialize dictionary to store layer thickness data
+    layer_data = []
 
-    # Remove alpha channel if present
-    if img_array.shape[-1] == 4:
-        img_array = img_array[:, :, :3]
+    # Get image dimensions
+    img_height, img_width, _ = image_data.shape
 
-    # Initialize dictionary to store color information
-    color_info = {}
-
-    # Get image width and height
-    img_width, img_height = img_array.shape[1], img_array.shape[0]
-
-    # Iterate over each color
+    # Calculate layer thicknesses
     for idx, color_rgb in enumerate(colors_rgb):
-        # Check if any pixel matches the current color
-        mask = np.all(img_array == color_rgb, axis=-1)
-        # Calculate total number of pixels for the color
+        # Create a mask for pixels matching the layer color
+        mask = np.all(image_data == np.array(color_rgb), axis=-1)
+
+        # Calculate the thickness of the layer
         total_pixels = np.sum(mask)
-        # Divide by image width to normalize by image size
         pixels_per_width = total_pixels / img_width
-        # Divide by image height and multiply by 6000 to get layer thickness in micrometers (assumes image is 6mm by 6mm)
-        layer_thickness = (pixels_per_width / img_height) * 6000
-        # Store color information including hexadecimal value and layer thickness
-        color_info[f'Color_{idx+1}'] = {
-            'Layer': layer_names[idx],  # Adding the B Scan layer names
-            'RGB': color_rgb,
-            'Hex': colors[idx],  # Adding the hexadecimal value
-            'TotalPixels': total_pixels,
-            'PixelsPerWidth': pixels_per_width,
-            'LayerThickness': layer_thickness  # Adding the layer thickness
-        }
+        layer_thickness = (pixels_per_width / img_height) * 6000  # Assume image size to represent 6mm
 
-    # Convert color information to DataFrame
-    color_df = pd.DataFrame.from_dict(color_info, orient='index')
+        # Append the data for this layer
+        layer_data.append({
+            'Layer': idx + 1,
+            'LayerName': layer_names[idx],  # from the predefined list of layer names
+            'LayerThicknessMicrometers': layer_thickness
+        })
 
-    # Select the relevant rows based on indices layer1 and layer2
-    if layer1 > layer2:
-        selected_layers = color_df.iloc[layer2 - 1:layer1]
-    else:
-        selected_layers = color_df.iloc[layer1 - 1:layer2]
+    # Create DataFrame from the layer data
+    df_layers = pd.DataFrame(layer_data)
+    selected_layers = df_layers[(df_layers['Layer'] >= min(layer1, layer2)) & (df_layers['Layer'] <= max(layer1, layer2))]
 
-    # Sum the layer thickness values
-    total_thickness = str(selected_layers['LayerThickness'].sum()) + " um"
+    # Calculate the total thickness of selected layers
+    total_thickness = selected_layers['LayerThicknessMicrometers'].sum()
 
-    print(total_thickness)
-
-    return total_thickness
+    # Return total thickness as a formatted string
+    return f"{total_thickness:.2f} um"
 

@@ -6,11 +6,14 @@
 
 # Import required modules from Tkinter and other components of the application
 from tkinter import *
+import tkinter as tk
+from tkinter import ttk
 import Components as MAIN_COMPONENTS
 import File_Upload as UPLOAD_FILE
 import Tabs as TAB
 import Tabs2 as TAB2
 import Config as CONFIG
+import octa_tabs as OCTA_TAB
 
 # Initialize the main application window (master frame)
 master = Tk()
@@ -29,10 +32,12 @@ master.configure(bg="white")
 master.title("Patient Name: Dummy Person | DOB: 06/15/2002 | ID: 11223344 ")
 
 # Path variables for icons used in the GUI, which are loaded within components
-measure_icon = "measure_button.png"
+measure_icon = "measurement_button.png"
 logo_img = "logo.png"
 up_image = "up_button.png"
 down_image = "down_button.png"
+Table_button = "Table_button.png"
+filepath = 'OCTA.png'
 
 # Setup and display of all GUI components 
 MAIN_COMPONENTS.start_screen(master)
@@ -42,9 +47,12 @@ MAIN_COMPONENTS.tools(master)
 MAIN_COMPONENTS.layer(master)
 MAIN_COMPONENTS.diag_button(master)
 MAIN_COMPONENTS.layerDetails(master)
+MAIN_COMPONENTS.OCTA_features(master)
+MAIN_COMPONENTS.initialize_empty_frames(master)
 
-# Initalize Enface and Contour Mapping Tab within the application and thier funcationalites
-frames, num_tabs_list = TAB.initialize_tabs(master)
+# # Initalize Enface and Contour Mapping Tab within the application and thier funcationalites
+# # frames, num_tabs_list = TAB.initialize_tabs(master)
+# frames_octa, tab_names_list_octa = OCTA_TAB.initialize_tabs3(master)
 
 # Setup the scan table for file selection and interaction
 table_select = UPLOAD_FILE.selectScanTabel(master,data)
@@ -56,7 +64,7 @@ UPLOAD_FILE.file_upload_btn(master, table_select)
 UPLOAD_FILE.file_name(master,table_select,name_borwser)
 
 # Initalize skeletonization, perimeter mapping and RAW OCT-B scan Tabs and thier funcationalites
-TAB2.main_application(CONFIG.selected_file_path, master)
+# TAB2.main_application(CONFIG.selected_file_path, master)
 
 # mainloop, runs infinitely
 mainloop()

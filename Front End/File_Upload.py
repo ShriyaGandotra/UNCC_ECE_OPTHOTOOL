@@ -33,7 +33,7 @@ def display_name(master,name):
         name = "Dummy_Left_Eye"
 
     T = Text(master, height = 2, width = 20,font = "Karla 12",relief="flat")
-    T.CONFIG(bg="white")
+    T.configure(bg="white")
     T.place(x=550,y=60)
     T.insert(END,name)
 
@@ -42,7 +42,7 @@ def display_eye_side(master):
     eye_side = "Left/ODD"
 
     T = Text(master, height = 2, width = 20,font = "Karla 12",relief="flat")
-    T.CONFIG(bg="white")
+    T.configure(bg="white")
     T.place(x=1330,y=60)
     T.insert(END,eye_side)
 
@@ -61,16 +61,14 @@ def file_name(master, table_select, name=""):
     if name != "No File Chosen":
         file_type = os.path.splitext(name)[1].upper().replace(".", "")
         date_time = datetime.now().strftime("%m/%d/%y   %I:%M%p")
-        # Append the new file's details to the table
-
-        
-        table_select.insert("", "end", values=(name, date_time, file_type))
+        # Append the new file's details to the table  
+        table_select.insert("", 0 , values=(name, date_time, file_type))
 
     return file_name_display
 
 def simulate_file_loading(progress_bar, popup, completion_callback=None):
     """
-    Simulate file loading process by updating the progress bar.
+    Simulate file loading process by updating the progress bar.4
     """
     for i in range(100):
         time.sleep(0.05)  # Simulate time-consuming operation
@@ -108,6 +106,10 @@ def update_table_with_file(master, table, file_path):
     table.insert("", "end", values=(name, date_time, file_type))
     
 from tkinter import Tk, Button, Toplevel, ttk, Label, font as tkfont
+import AVA as AVA
+import octa_tabs as OCTA_TAB
+import B_Scan_Tabs as B_SCAN
+import Components as MAIN
 
 #display file button
 def file_upload_btn(master, table_select):
@@ -118,28 +120,82 @@ def file_upload_btn(master, table_select):
             ["Enface"],  # Names for tabs in the first frame # Names for tabs in the second frame  # Names for tabs in the third frame
             ["Contour Mapping"]  # Names for tabs in the fourth frame
         ]
-        def run_conversion():
-            # OCT-CONVERSION
-            OCT.oct_conversion(oct_f_path)
-            # ENFACE
-            ENFACE.enface_conversion()
-            # SEGMENTER + CONTOUR 
-            CONTOUR.contour_conversion()
-            # SKELETONIZATION
-            skeleton_path = 'OCTA.png'
-            SKELETON.skeletonize_image(skeleton_path)
-            # PERIMETER
-            perimeter_path = 'OCTA.png'
-            PERIMETER.perimeter_image(perimeter_path)
+        tab_names_list_octa = [
+        ["Raw OCT-A"],  # Names for tabs in the first frame
+        ["AVA Map"], 
+        ["Skeletonized Map"], 
+        ["Perimeter Map"]  # Names for tabs in the fourth frame
+        ]
+        
+        tab_names_list_b = [
+        ["Enface"],  # Names for tabs in the first frame
+        ["Middle OCT-B"], 
+        ["RAW OCT-B"], 
+        ["Contour Mapping"]  # Names for tabs in the fourth frame
+    ]
     
+        def run_conversion():
+            global av_map_path, a_map_path, v_map_path
+            OCTA_TAB.empty_frame(master)
+
             name_browser = os.path.basename(oct_f_path)
             file_name(master, table_select, name_browser)
-            TAB.tabs(master, CONFIG.frames, CONFIG.num_tabs_list, file_name, tab_names_list)
-            # TABS2.main_application(selected_file_path, master)
+
+            if oct_f_path[-3:] == "OCT":
+                B_SCAN.initialize_tab_b(master)
+                # OCT-CONVERSION
+                OCT.oct_conversion(oct_f_path)
+                # ENFACE
+                ENFACE.enface_conversion()
+                # SEGMENTER + CONTOUR 
+                CONTOUR.contour_conversion()
+                #TAB.tabs(master, CONFIG.frames, CONFIG.num_tabs_list, file_name, tab_names_list)
+                B_SCAN.b_tabs(master, CONFIG.frames_b, CONFIG.num_tabs_list_b, selected_file_path, tab_names_list_b)
+                MAIN.enable_measure_button(oct_f_path)
+                MAIN.enable_octa_button(selected_file_path)
+                MAIN.enable_widgets(selected_file_path)
+                MAIN.enable_diagnose_button(selected_file_path)
+                # TABS2.main_application(selected_file_path, master)
+
+            if oct_f_path[-3:] == "png":
+                print("in png loop")
+                OCTA_TAB.initialize_tabs_2(master)
+                print("initalized tabs 2")
+                # SKELETONIZATION
+                octa_path = 'OCTA.png'
+                SKELETON.skeletonize_image(octa_path)
+                # PERIMETER
+                PERIMETER.perimeter_image(octa_path)
+                # AVA
+                ava_model = 'AVA_model_3.hdf5'
+                av_map_path, a_map_path, v_map_path = AVA.AVA_save(octa_path, ava_model)
+                OCTA_TAB.octa_tabs(master, CONFIG.frames_octa, CONFIG.num_tabs_list_octa, file_name, tab_names_list_octa)
+                MAIN.enable_measure_button(oct_f_path)
+                MAIN.enable_octa_button(selected_file_path)
+                MAIN.enable_widgets(selected_file_path)
+                MAIN.enable_diagnose_button(selected_file_path)
+            
             # load_images(selected_file_path)
             popup.destroy()  # Close the popup window once conversion is done
-            upload_file_btn.CONFIG(state="normal")
-            TAB.tabs(master, CONFIG.frames, CONFIG.num_tabs_list, file_name, tab_names_list)
+            upload_file_btn.configure(state="normal")
+
+
+            if oct_f_path[-3:] == "OCT":
+                B_SCAN.initialize_tab_b(master)
+                #TAB.tabs(master, CONFIG.frames, CONFIG.num_tabs_list, file_name, tab_names_list)
+                B_SCAN.b_tabs(master, CONFIG.frames_b, CONFIG.num_tabs_list_b, selected_file_path, tab_names_list_b)
+                MAIN.enable_measure_button(oct_f_path)
+                MAIN.enable_octa_button(selected_file_path)
+                MAIN.enable_widgets(selected_file_path)
+                MAIN.enable_diagnose_button(selected_file_path)
+                # TABS2.main_application(selected_file_path, master)
+
+            if oct_f_path[-3:] == "png":   
+                OCTA_TAB.initialize_tabs_2(master)
+                OCTA_TAB.octa_tabs(master, CONFIG.frames_octa, CONFIG.num_tabs_list_octa, file_name, tab_names_list_octa)
+                MAIN.enable_measure_button(oct_f_path)
+                MAIN.enable_octa_button(selected_file_path)
+                MAIN.enable_widgets(selected_file_path)
 
        # Create a popup window for the progress bar
         popup = Toplevel(master)
@@ -153,7 +209,7 @@ def file_upload_btn(master, table_select):
 
         # CONFIGure the progress bar with custom colors
         style = ttk.Style()
-        style.theme_use('default')
+        style.theme_use('clam')
         style.configure("custom.Horizontal.TProgressbar", 
                         background='#008dd2', troughcolor='#f9f9f9')
         
@@ -162,7 +218,7 @@ def file_upload_btn(master, table_select):
         progress.pack(pady=10)
         progress.start(10)
 
-        upload_file_btn.CONFIG(state="disabled")  # Disable the button while processing
+        upload_file_btn.configure(state="disabled")  # Disable the button while processing
         threading.Thread(target=run_conversion).start()
 
     def browse():
@@ -190,20 +246,25 @@ def file_upload_btn(master, table_select):
 
 # function for selecting scan and corresponding file tabel
 def selectScanTabel(master,table_data):
-    frame = ttk.Frame(master, padding="0")
+    frame_height = 180
+
+    frame = ttk.Frame(master, padding="0", height=frame_height)
     frame.pack(padx=0, pady=0)
-    frame.place(x=86, y=230)
+    frame.place(x=86, y=231)
 
     # Styling the Treeview
     style = ttk.Style()
-    style.theme_use("default")
+    style.theme_use('clam')
 
     # CONFIGure the font and background for headings and rows
-    style.configure("Treeview", font=("Karla", 10), rowheight=25)
-    style.configure("Treeview.Heading", font=("Karla", 10, "bold"), background="#e1e1e1", foreground="black")
+    style.configure("Treeview", font=("Karla", 10), rowheight=23)
+    style.configure("Treeview.Heading", font=("Karla", 10), background="#e1e1e1", foreground="black")
 
     # CONFIGure the Treeview layout
-    style.map("Treeview", background=[('alternate', '#f5f5f5')])  # Alternating row colors
+    # style.map("Treeview", background=[('alternate', '#f5f5f5')])
+    style.map('Treeview', 
+              background=[('selected', '#e1e1e1')],  # light grey background for selected row
+              foreground=[('selected', 'black')]) 
 
     # CONFIGure the scrollbar style
     style.configure("Vertical.TScrollbar", gripcount=0, background="#c1c1c1", darkcolor="#c1c1c1",
@@ -211,7 +272,7 @@ def selectScanTabel(master,table_data):
     style.map("Vertical.TScrollbar", background=[("active", "#a1a1a1")])
 
     # Create Treeview widget
-    table = ttk.Treeview(frame, columns=("File Name", "Date/Time", "File Type"), show='headings', height=7)
+    table = ttk.Treeview(frame, columns=("File Name", "Date/Time", "File Type"), show='headings', height=6)
     table.grid(row=1, column=0, padx=0, pady=0, sticky="nsew")
 
     # Create Scrollbar widget
@@ -234,32 +295,57 @@ def selectScanTabel(master,table_data):
         
         # Retrieve the item's values
         item_values = tree.item(selected_item, 'values')
-        
+
+        print(selected_file_path)
+        print(item_values)
+
         # Access individual values assuming a tuple structure (file_name, date_time, file_type)
         file_name, date_time, file_type = item_values
+
         tab_names_list = [
             ["Enface"],  # Names for tabs in the first frame  # Names for tabs in the second frame
             ["Contour Mapping"]  # Names for tabs in the fourth frame
         ]
-        TAB.tabs(master, CONFIG.frames, CONFIG.num_tabs_list, file_name, tab_names_list)
-        # load_images(selected_file_path)
-        TABS2.main_application(selected_file_path, master)
-        file_name = file_name.split(".")[0]
+
+        tab_names_list_octa = [
+        ["Raw OCT-A"],  # Names for tabs in the first frame
+        ["AVA Map"], 
+        ["Skeletonized Map"], 
+        ["Perimeter Map"]  # Names for tabs in the fourth frame
+        ]
         
-        display_name(master,file_name)
+        tab_names_list_b = [
+        ["Enface"],  # Names for tabs in the first frame
+        ["Middle OCT-B"], 
+        ["RAW OCT-B"], 
+        ["Contour Mapping"]  # Names for tabs in the fourth frame
+        ]
     
+        # Check file extension directly from file_type or parse from file_name
+        if file_name.lower().endswith(".oct"):
+            B_SCAN.initialize_tab_b(master)
+            B_SCAN.b_tabs(master, CONFIG.frames_b, CONFIG.num_tabs_list_b, file_name, tab_names_list_b)
+        elif file_name.lower().endswith(".png"):
+            OCTA_TAB.initialize_tabs_2(master)
+            OCTA_TAB.octa_tabs(master, CONFIG.frames_octa, CONFIG.num_tabs_list_octa, file_name, tab_names_list_octa)
+
+        # Updating UI elements based on selected file
+        MAIN.enable_measure_button(file_name)
+        MAIN.enable_octa_button(file_name)
+        MAIN.enable_diagnose_button(file_name)
+        MAIN.enable_widgets(file_name)
+        display_name(master, file_name.split(".")[0])
+                
     # Bind the nested function to the treeview's selection event
     table.bind('<<TreeviewSelect>>', on_row_selected)
 
+    table.column("File Name", width=137, anchor="w", stretch=False)
+    table.column("Date/Time", width=138, anchor="w", stretch=False)
+    table.column("File Type", width=139, anchor="w", stretch=False)
 
-    # CONFIGuring column widths and headers
-    table.column("File Name", width=150, anchor="w")
-    table.column("Date/Time", width=150, anchor="w")
-    table.column("File Type", width=113, anchor="w")
-
-    table.heading("File Name",anchor="w", text="File Name")
-    table.heading("Date/Time",anchor="w", text="Date/Time")
-    table.heading("File Type", anchor="w", text="File Type")
+    table.heading("File Name", anchor="w", text=" File Name")
+    table.heading("Date/Time", anchor="w", text=" Date/Time")
+    table.heading("File Type", anchor="w", text=" File Type")
 
     # Apply tags for alternating row colors
     style.configure('evenrow', background="#f5f5f5")

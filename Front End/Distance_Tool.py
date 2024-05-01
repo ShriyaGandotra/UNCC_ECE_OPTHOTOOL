@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import math
+import Components as MAIN
 
 # Global reference for the photo image to prevent garbage collection
 photo = None
@@ -43,17 +44,17 @@ def create_distance_calculator():
             result_label.place(x=midpoint[0], y=midpoint[1], anchor="center")
             if line:
                 canvas.delete(line)
-            line = canvas.create_line(point1[0], point1[1], point2[0], point2[1], fill="red", width=2)
+            line = canvas.create_line(point1[0], point1[1], point2[0], point2[1], fill="black", width=2)
 
     def set_point(event):
         nonlocal point1, point2, point1_oval, point2_oval
         if image_loaded:
             if point1 is None:
                 point1 = (event.x, event.y)
-                point1_oval = canvas.create_oval(event.x - 5, event.y - 5, event.x + 5, event.y + 5, outline="red", width=0.5, fill="red")
+                point1_oval = canvas.create_oval(event.x - 5, event.y - 5, event.x + 5, event.y + 5, outline="black", width=0.5, fill="black")
             elif point2 is None:
                 point2 = (event.x, event.y)
-                point2_oval = canvas.create_oval(event.x - 5, event.y - 5, event.x + 5, event.y + 5, outline="red", width=0.5, fill="red")
+                point2_oval = canvas.create_oval(event.x - 5, event.y - 5, event.x + 5, event.y + 5, outline="black", width=0.5, fill="black")
                 calculate_distance()
 
     def toggle_measure_mode():
@@ -100,20 +101,26 @@ def create_distance_calculator():
     # Create the new window for the distance calculator
     calculator_window = tk.Toplevel()
     calculator_window.title("Image Distance Calculator")
+    calculator_window.configure(bg="white")
+    calculator_window.geometry("700x750")
+
+    optho_label = tk.Label(calculator_window, text ="OPTHOTOOL TECHNOLOGY", width=200, height=2, font = "Karla 10 bold", borderwidth=2, relief="groove")
+    optho_label.config(bg= "#4990FB", fg= "white")
+    optho_label.pack(pady = 0)
 
     calculator_window.resizable(False, False)
 
+    frame = ttk.Frame(calculator_window)
+    frame.pack()
+
     # Create and configure the canvas
-    canvas = tk.Canvas(calculator_window, width=640, height=650)  # Adjust size as needed
+    canvas = tk.Canvas(frame, width=640, height=640)  
+    canvas.place(y = 40)
     canvas.pack(fill="both", expand=True)
 
-    # Create a frame for buttons
-    button_frame = ttk.Frame(calculator_window)
-    button_frame.pack()
 
     # Measure tool button
-    measure_button = tk.Button(button_frame, text="Meaurement Tool", command=toggle_measure_mode)
-    measure_button.place(x = 320, y =610)
-    measure_button.grid(row=0, column=1)
+    measure_button = tk.Button(calculator_window, text="Meaurement Tool", command=toggle_measure_mode, borderwidth=0, bg='#4990FB',font="Karla 10 bold", fg='white', padx= 5 , pady = 5)
+    measure_button.place(x = 290, y = 700)
 
     open_image()

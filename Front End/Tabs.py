@@ -34,19 +34,6 @@ def tabs(master, frames, num_tabs_list, selected_file_path, tab_names_list):
 
             if j == 0 and selected_file_path and isinstance(selected_file_path, str) and len(selected_file_path) >= 3:
 
-                #Add code to add image to the tab, as per the specific file type handling and requirements
-                if selected_file_path[-3:] == "png":
-                    try:
-                        print(selected_file_path)
-                        img = Image.open(selected_file_path)
-                        img_resized = img.resize((400, 300))
-                        img_photo = ImageTk.PhotoImage(img_resized)
-                        label = tk.Label(tab, image=img_photo)
-                        label.image = img_photo  # keep a reference to the image
-                        label.pack(padx=10, pady=10)
-                    except Exception as e:
-                        print(f"Error loading image from {selected_file_path}: {e}")
-
                 if selected_file_path[-3:] == "OCT":
                         print(selected_file_path)
                         base_path = os.path.splitext(selected_file_path)[0]
@@ -86,6 +73,12 @@ def tabs(master, frames, num_tabs_list, selected_file_path, tab_names_list):
         # Store the reference to the Notebook widget in the frame for later destruction
         frame.notebook = main_tabControl
 
+def clear_all_tabs(frames):
+    """Clear all tabs from each frame provided."""
+    for frame in frames:
+        if hasattr(frame, 'notebook'):
+            frame.notebook.destroy()  # Destroy the notebook widget to clear all its tabs
+            delattr(frame, 'notebook')  # Remove the attribute to avoid reference issues
 
 def initialize_tabs(master):
     frame = Frame(master, width=600, height=600)
@@ -96,10 +89,12 @@ def initialize_tabs(master):
     frame4.pack()
     frame4.place(x=1000, y=470)
 
-    config.frames = [frame, frame4]  # List of frames for the tabs
-    config.num_tabs_list = [0, 0]  # Adjusted to match the number of tabs you're adding
+    config.frames = [frame, frame4]  # Initialize the list of frames for the tabs if not already done
+
+    config.num_tabs_list = [0, 0]
 
     selected_file_path = None  # This seems like a placeholder for now
+
     tab_names_list = [
         ["Enface"],  # Names for tabs in the first frame
         ["Contour Mapping"]  # Names for tabs in the fourth frame

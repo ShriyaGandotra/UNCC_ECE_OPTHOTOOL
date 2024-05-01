@@ -1,0 +1,33 @@
+[Scan Information]
+Eye Scanned=OS
+CCD Pixels Per Line= 2048
+Points Per Line= 1024
+Blank Lines Per Frame= 0
+Start Invalid Lines= 0
+End Invalid Lines= 0
+XOffset= 0.00
+YOffset= 0.00
+Frames Per Data Group= 512
+Total Data Groups= 1
+OCT Window Start Point= 0
+OCT Window Height= 640
+.OCT Data Type= float
+Scan Depth=1.995 mm
+[AngioVue Retina Step 1]
+XY Scan Type= Custom
+XY Scan Sequence Type=ras
+XY Scan Length= 512
+XY Scan Usage= 512
+Need Acquiring Phase=n
+[AngioVue Retina Step 1 Detail]
+XY Scan Size1= 6.40 mm
+XY Scan Angle1= 0.00°
+XY Scan Interval1= 0.013 mm
+XY Scan Usage1= 512
+[Video Information]
+Video Center=(513, 385)
+Video Height=-480
+Video Widtht=640
+BitCount=24
+Physical video width=14.76923 mm
+Physical video Height=11.07692 mm
